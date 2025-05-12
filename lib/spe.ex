@@ -28,7 +28,19 @@ defmodule SPE do
   end
 
   def handle_call(request, from, state) do
-
+    case request do
+      {:submit, job_desc} ->
+        if (!valid_job?(job_desc)) do
+          {:reply, {:error, :invalid_description}, state}
+        else
+          {:reply, GenServer.call(SPE.JobManager, {:submit, job_desc}), state}
+        end
+      {:start, job_id} ->
+        {:reply, GenServer.call(SPE.JobManager, {:start, job_id}), state}
+      _ ->
+        Logger.error("[SPE #{inspect(self())}]: Request did not match any clause...")
+        {:reply, {:error, :invalid_request}, state}
+    end
   end
 
   def start_link(opts) do
