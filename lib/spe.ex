@@ -1,18 +1,21 @@
-defmodule Spe do
-  @moduledoc """
-  Documentation for `Spe`.
-  """
+defmodule SPE do
+  use GenServer
 
-  @doc """
-  Hello world.
+  def init(state) do
 
-  ## Examples
+  end
 
-      iex> Spe.hello()
-      :world
+  def handle_call(request, from, state) do
 
-  """
-  def hello do
-    :world
+  end
+
+  def start_link(opts) do
+  end
+
+  def submit_job(job_desc) do
+  end
+
+  def start_job(job_id) do
+
   end
 end
