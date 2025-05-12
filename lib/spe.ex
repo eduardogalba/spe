@@ -1,5 +1,6 @@
 defmodule SPE do
   use GenServer
+  require Logger
 
   def init(state) do
     pubsub = Phoenix.PubSub.child_spec(name: SPE.PubSub)
@@ -14,11 +15,14 @@ defmodule SPE do
       manager
     ]
 
+    Logger.info("[SPE #{inspect(self())}]: Server starting...")
     case Supervisor.start_link(children, strategy: :one_for_one) do
       {:ok, supv} -> {:ok, Map.put(state, :supv, supv)}
       {:error, {:already_started, _}} = error ->
+        Logger.error("[SPE #{inspect(self())}]: Server is already started.")
         error
       {:error, {:shutdown, reason}} ->
+        Logger.error("[SPE #{inspect(self())}]: One of the child processes is crashing caused by #{inspect(reason)}")
         reason
     end
   end
