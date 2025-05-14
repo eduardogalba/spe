@@ -51,65 +51,48 @@ defmodule Job do
           end
 
         if disable_tasks == [] do
-            {:stop, :unhandled}
+          new_done = Map.put(state[:done], task_name, result)
+          new_state =
+            state
+            |> Map.put(:undone, new_undone)
+            |> Map.put(:done, new_done)
+
+          {:noreply, new_state}
         else
 
-        new_plan =
-          Enum.reduce(
-            disable_tasks,
-            fn d_task ->
-              Enum.map(
-                state[:plan],
-                fn next_tasks ->
-                  List.delete(next_tasks, d_task)
-                end
-              )
-            end
-          )
+          new_plan =
+            Enum.reduce(
+              disable_tasks,
+              fn d_task ->
+                Enum.map(
+                  state[:plan],
+                  fn next_tasks ->
+                    List.delete(next_tasks, d_task)
+                  end
+                )
+              end
+            )
 
-        new_done =
-          Enum.reduce(
-            disable_tasks,
-            fn d_task ->
-              Map.put(state[:done], d_task, :not_run)
-            end
-          )
-          |> Map.put(task_name, result)
+          IO.puts("Nuevo plan: #{inspect(new_plan)}")
 
-        # Actualiza el estado con los nuevos valores
-        new_state =
-          state
-          |> Map.put(:done, new_done)
-          |> Map.put(:undone, new_undone)
-          |> Map.put(:plan, new_plan)
+          new_done =
+            Enum.reduce(
+              disable_tasks,
+              fn d_task ->
+                Map.put(state[:done], d_task, :not_run)
+              end
+            )
+            |> Map.put(task_name, result)
 
-        # case start_tasks(state, nil) do
-        #   :stop ->
-        #     failed =
-        #       Enum.any?(state[:done], fn result ->
-        #         case result do
-        #           {:failed, _reason} -> true
-        #           _ -> false
-        #         end
-        #       end)
-        #
-        #     status = if failed, do: :failed, else: :suceeded
-        #
-        #     Phoenix.PubSub.local_broadcast(
-        #       SPE.PubSub,
-        #       state[:id],
-        #       {
-        #         :spe,
-        #         :erlang.monotonic_time(:millisecond) - state[:start_time],
-        #         {state[:id],:result, {status, state[:done]}}}
-        #     )
-        #
-        #     {:stop, :normal}
-        #
-        #   :not_matched -> {:stop, {:error, :wrong_plan_format}}
-        #   new_state -> {:ok, new_state}
-        # end
-        {:noreply, new_state}
+          IO.puts("Tareas hechas #{inspect(new_done)}")
+          # Actualiza el estado con los nuevos valores
+          new_state =
+            state
+            |> Map.put(:done, new_done)
+            |> Map.put(:undone, new_undone)
+            |> Map.put(:plan, new_plan)
+
+          {:noreply, new_state}
     end
 
       {:result, value} ->
@@ -166,7 +149,9 @@ defmodule Job do
 
   defp start_tasks(state) do
     case state[:plan] do
-      [] -> :stop
+      [] ->
+        Logger.info("[Job #{inspect(self())}]: No more tasks left to run...")
+        :stop
 
       [first_tasks | next_tasks] ->
         Logger.info("[Job #{inspect(self())}]: Starting tasks #{inspect(first_tasks)}")
@@ -174,8 +159,11 @@ defmodule Job do
         # Olvidamos Supervisor por ahora, las primeras tareas no requieren args por eso nil
         Enum.each(
           first_tasks,
-          fn task_name->
-            spawn_link(SPETask, :apply, [job_id, task_name, state[:tasks][task_name]["exec"], [state[:done]]])
+          fn task ->
+            case task do
+              [] -> nil
+              task_name -> spawn_link(SPETask, :apply, [job_id, task_name, state[:tasks][task_name]["exec"], [state[:done]]])
+            end
           end
         )
 
@@ -183,7 +171,9 @@ defmodule Job do
           |> Map.put(:plan, next_tasks)
           |> Map.put(:undone, first_tasks)
 
-      _ -> :not_matched
+      _ ->
+        Logger.error("[Job #{inspect(self())}]: Something is strange in tasks plan")
+        :not_matched
       end
   end
 
