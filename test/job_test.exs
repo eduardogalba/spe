@@ -54,5 +54,19 @@ defmodule JobTest do
     }
 
     {:ok, _pid} = Job.start_link(job)
+
+
+    receive_wait()
   end
+
+  defp receive_wait() do
+    receive do
+      msg = {:spe, _, {_, :result, _}} ->
+        IO.inspect(msg, label: "Test: ")
+      msg = {:spe, _, {_, :task_terminated, _}} ->
+        IO.inspect(msg, label: "Test: ")
+        receive_wait()
+    end
+  end
+
 end

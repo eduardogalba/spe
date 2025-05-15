@@ -1,8 +1,5 @@
-defmodule SpeTest do
+defmodule SPETest do
   use ExUnit.Case
-  doctest Spe
+  doctest SPE
 
-  test "greets the world" do
-    assert Spe.hello() == :world
-  end
 end
