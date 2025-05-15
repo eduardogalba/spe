@@ -98,6 +98,7 @@ defmodule Job do
       {:result, value} ->
         Logger.info("[Job #{inspect(self())}]: Handling task ending...")
         new_undone = List.delete(state[:undone], task_name)
+        Logger.info("[Job #{inspect(self())}]: These are the tasks stil running => #{inspect(new_undone)}")
         new_done =
           state[:done]
           |> Map.put(task_name, value)
@@ -107,37 +108,50 @@ defmodule Job do
           |> Map.put(:done, new_done)
           |> Map.put(:undone, new_undone)
 
-        case start_tasks(new_state) do
-          :stop ->
-            Logger.info("[Job #{inspect(self())}]: Finished all tasks...")
-            failed =
-              Enum.any?(new_state[:done], fn result ->
-                case result do
-                  {:failed, _reason} -> true
-                  _ -> false
-                end
-              end)
+        # Evitar condiciones de carrera y seguir la planificacion estática,
+        # solo si han terminado las tareas en ejecuacion se continua
+        # [[]] porque supongo que la lista esta rellena de de una lista vacia
+        # cuando no se va ejecutar un proceso, podria ser cualquier cosa(nil)
+        # Ejemplo: Solo se ejecuta task4 para num_workers=2 [["task4", []]]
+        if new_undone == [] or new_undone == [[]] do
+          Logger.info("[Job #{inspect(self())}]: Let´s continue with the plan...")
+          case start_tasks(new_state) do
+            :stop ->
+              Logger.info("[Job #{inspect(self())}]: Finished all tasks...")
+              failed =
+                Enum.any?(new_state[:done], fn result ->
+                  case result do
+                    {:failed, _reason} -> true
+                    _ -> false
+                  end
+                end)
 
-            status = if failed, do: :failed, else: :suceeded
+              status = if failed, do: :failed, else: :suceeded
 
-            Phoenix.PubSub.local_broadcast(
-              SPE.PubSub,
-              "#{inspect(new_state[:id])}",
-              {
-                :spe,
-                :erlang.monotonic_time(:millisecond) - new_state[:time_start],
-                {new_state[:id],:result, {status, new_state[:done]}}}
-            )
+              Phoenix.PubSub.local_broadcast(
+                SPE.PubSub,
+                "#{inspect(new_state[:id])}",
+                {
+                  :spe,
+                  :erlang.monotonic_time(:millisecond) - new_state[:time_start],
+                  {new_state[:id],:result, {status, new_state[:done]}}}
+              )
 
-            {:stop, :normal, new_state}
+              {:stop, :normal, new_state}
 
-          :not_matched ->
-            {:stop, {:error, :wrong_plan_format}}
+            :not_matched ->
+              {:stop, {:error, :wrong_plan_format}}
 
-          final_state ->
-            Logger.info("[Job #{inspect(self())}]: Next state...")
-            {:noreply, final_state}
+            final_state ->
+              Logger.info("[Job #{inspect(self())}]: Next state...")
+              {:noreply, final_state}
+          end
+        else
+          # De lo contrario, se actualiza el estado y se espera por la terminacion
+          # de las demas
+          {:noreply, new_state}
         end
+
 
     end
   end
