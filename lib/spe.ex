@@ -70,7 +70,22 @@ defmodule SPE do
           Map.put(job, :plan, job_plan)
         end
       )
-    {:noreply, new_state}
+    # De momento, no se manejan posibles errores
+    if (Map.has_key?(state[:waiting], job_id)) do
+      GenServer.reply(state[:waiting][job_id], :ok)
+      new_state =
+        update_in(
+          new_state[:waiting],
+          fn clients ->
+            Map.delete(clients, job_id)
+          end
+        )
+      JobManager.start_job(state[:jobs][job_id])
+      {:noreply, new_state}
+    else
+      {:noreply, new_state}
+    end
+
   end
 
   def handle_info(_, state) do
