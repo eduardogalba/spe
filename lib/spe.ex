@@ -57,7 +57,8 @@ defmodule SPE do
             )
           {:noreply, new_state}
         else
-          case JobManager.start_job(state[:jobs][job_id]) do
+          job = Map.put(state[:jobs][job_id], :id, job_id)
+          case JobManager.start_job(job) do
             {:ok, _} -> {:reply, :ok, state}
             any -> {:reply, any, state}
           end
@@ -91,7 +92,8 @@ defmodule SPE do
           end
         )
       Logger.debug("[SPE #{inspect(self())}]: After replying #{inspect(new_state)}")
-      case JobManager.start_job(state[:jobs][job_id]) do
+      job = Map.put(state[:jobs][job_id], :id, job_id)
+      case JobManager.start_job(job) do
             {:ok, _} -> GenServer.reply(state[:waiting][job_id], :ok)
             any -> GenServer.reply(state[:waiting][job_id], any)
       end
