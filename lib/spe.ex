@@ -34,8 +34,12 @@ defmodule SPE do
           {:reply, {:error, :invalid_description}, state}
         else
           job_id = make_ref()
+          new_jobs =
+            state[:jobs]
+            |> Map.put(job_id, %{desc: job_desc, plan: nil})
+
           spawn_link(Scheduler.planning(self(), {job_id, job_desc}))
-          {:reply, {:ok, job_id}, state}
+          {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
         end
       {:start, job_id} ->
         {:reply, GenServer.call(SPE.JobManager, {:start, job_id}), state}
@@ -43,6 +47,21 @@ defmodule SPE do
         Logger.error("[SPE #{inspect(self())}]: Request did not match any clause...")
         {:reply, {:error, :invalid_request}, state}
     end
+  end
+
+  def handle_info({:planning, {job_id, job_plan}}, state) do
+    new_state =
+      update_in(
+        state[:jobs][job_id],
+        fn job ->
+          Map.put(job, :plan, job_plan)
+        end
+      )
+    {:noreply, new_state}
+  end
+
+  def handle_info(_, state) do
+    {:noreply, state}
   end
 
   def start_link(opts) do
