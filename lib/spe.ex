@@ -57,8 +57,11 @@ defmodule SPE do
             )
           {:noreply, new_state}
         else
-          JobManager.start_job(state[:jobs][job_id])
-          {:reply, :ok, state}
+          case JobManager.start_job(state[:jobs][job_id]) do
+            {:ok, _} -> {:reply, :ok, state}
+            any -> {:reply, any, state}
+          end
+
         end
       _ ->
         Logger.error("[SPE #{inspect(self())}]: Request did not match any clause...")
@@ -79,7 +82,7 @@ defmodule SPE do
     # Un posible error es querer iniciar un trabajo no registrado
     if (Map.has_key?(state[:waiting], job_id)) do
       Logger.debug("[SPE #{inspect(self())}]: Replying client waiting...")
-      GenServer.reply(state[:waiting][job_id], :ok)
+
       new_state =
         update_in(
           new_state[:waiting],
@@ -88,7 +91,10 @@ defmodule SPE do
           end
         )
       Logger.debug("[SPE #{inspect(self())}]: After replying #{inspect(new_state)}")
-      JobManager.start_job(state[:jobs][job_id])
+      case JobManager.start_job(state[:jobs][job_id]) do
+            {:ok, _} -> GenServer.reply(state[:waiting][job_id], :ok)
+            any -> GenServer.reply(state[:waiting][job_id], any)
+      end
       {:noreply, new_state}
     else
       {:noreply, new_state}
