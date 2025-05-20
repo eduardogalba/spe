@@ -9,9 +9,15 @@ defmodule Job do
     Phoenix.PubSub.subscribe(SPE.PubSub, "#{inspect(state[:id])}:reports")
     Logger.info("[Job #{inspect(self())}]: Job starting...")
     case start_tasks(state) do
-      :stop -> {:stop, {:error, :empty_task_plan}}
-      :not_matched -> {:stop, {:error, :wrong_plan_format}}
-      new_state -> {:ok, new_state}
+      :stop ->
+        Logger.error("There are no plan for this!")
+        {:stop, {:error, :empty_task_plan}}
+      :not_matched ->
+        Logger.error("Dependencies are not correct")
+        {:stop, {:error, :wrong_plan_format}}
+      new_state ->
+        Logger.debug("Sucessfully starting..")
+        {:ok, new_state}
     end
 
   end
@@ -22,7 +28,7 @@ defmodule Job do
 
     # Quiero solo las descripciones de tarea como un mapa y no toda la descripción teniendo
     # las tareas como una lista
-
+    Logger.debug("Iniciando trabajo...")
     tasks =
       Enum.into(state[:desc]["tasks"], %{}, fn task_desc ->
         {task_desc["name"], task_desc}
@@ -113,7 +119,7 @@ defmodule Job do
         # [[]] porque supongo que la lista esta rellena de de una lista vacia
         # cuando no se va ejecutar un proceso, podria ser cualquier cosa(nil)
         # Ejemplo: Solo se ejecuta task4 para num_workers=2 [["task4", []]]
-        if new_undone == [] or new_undone == [[]] do
+        if new_undone == [] do
           Logger.info("[Job #{inspect(self())}]: Let´s continue with the plan...")
           case start_tasks(new_state) do
             :stop ->
@@ -175,15 +181,19 @@ defmodule Job do
           first_tasks,
           fn task ->
             case task do
-              [] -> nil
+              nil -> nil
               task_name -> spawn_link(SPETask, :apply, [job_id, task_name, state[:tasks][task_name]["exec"], [state[:done]]])
             end
           end
         )
 
+        cleaned_undone =
+          first_tasks
+          |> Enum.filter(&(&1))
+
         state
           |> Map.put(:plan, next_tasks)
-          |> Map.put(:undone, first_tasks)
+          |> Map.put(:undone, cleaned_undone)
 
       _ ->
         Logger.error("[Job #{inspect(self())}]: Something is strange in tasks plan")
