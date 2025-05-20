@@ -1,7 +1,7 @@
 defmodule JobManager do
-  use DynamicSupervisor
+  use Supervisor
 
-  @impl DynamicSupervisor
+  @impl Supervisor
   def init(_init_arg) do
     opts = [
       strategy: :one_for_one,
@@ -17,14 +17,13 @@ defmodule JobManager do
   end
 
   def start_job(job_state) do
-    child_spec = [
+    child_spec =
       %{
         id: job_state[:id],
         start: {Job, :start_link, [job_state]},
-        restart: :transient,
-        type: :worker
+        restart: :transient
       }
-    ]
+
 
     Supervisor.start_child(__MODULE__, child_spec)
   end
