@@ -38,6 +38,7 @@ defmodule Job do
       state
       |> Map.delete(:desc)
       |> Map.put(:tasks, tasks)
+      |> Map.put(:refs, %{})
       |> Map.put(:done, %{})
       |> Map.put(:undone, [])
       |> Map.put(:time_start, :erlang.monotonic_time(:millisecond))
@@ -154,11 +155,27 @@ defmodule Job do
           end
         else
           # De lo contrario, se actualiza el estado y se espera por la terminacion
-          # de las demas
+          # de las demas. Aqui siguen habiendo tareas por terminar.
+          # AQUI se puede optar por analizar undone y las dependencias para encolar
+          # una tarea que no siga el plan estatico y pueda ejecutar. Ojo habria
+          # que quitarla del plan
           {:noreply, new_state}
         end
 
 
+    end
+  end
+
+  def handle_info({:DOWN, monitor_ref, :process, _pid, reason}, state) do
+    case Map.get(state, monitor_ref) do
+      nil ->
+        Logger.debug("[Job #{inspect(self())}]: Monitor unknown")
+        {:noreply, state}
+      {_task_pid, task_name} ->
+        # Aqui se gestiona si el proceso ha cerrado anomalamente
+        # Yo optaria por analizar las dependencias, marcarlas como :not_run
+        # y quitarlas de las tareas pendientes (state[:plan])
+        {:noreply, state}
     end
   end
 
@@ -177,23 +194,30 @@ defmodule Job do
         Logger.info("[Job #{inspect(self())}]: Starting tasks #{inspect(first_tasks)}")
         job_id = state[:id]
         # Olvidamos Supervisor por ahora, las primeras tareas no requieren args por eso nil
-        Enum.each(
-          first_tasks,
-          fn task ->
-            case task do
-              nil -> nil
-              task_name -> spawn_link(SPETask, :apply, [job_id, task_name, state[:tasks][task_name]["exec"], [state[:done]]])
+        refs =
+          Enum.reduce(
+            first_tasks,
+            %{},
+            fn task, acc ->
+              case task do
+                nil -> acc
+                task_name ->
+                  {task_pid, ref} = spawn_monitor(SPETask, :apply, [job_id, task_name, state[:tasks][task_name]["exec"], [state[:done]]])
+                  Map.put(acc, ref, {task_pid, task_name})
+                end
             end
-          end
-        )
+          )
 
         cleaned_undone =
           first_tasks
           |> Enum.filter(&(&1))
 
+        new_refs = Map.merge(state[:refs], refs)
+
         state
           |> Map.put(:plan, next_tasks)
           |> Map.put(:undone, cleaned_undone)
+          |> Map.put(:refs, new_refs)
 
       _ ->
         Logger.error("[Job #{inspect(self())}]: Something is strange in tasks plan")
