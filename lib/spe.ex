@@ -42,7 +42,11 @@ defmodule SPE do
           {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
         end
       {:start, job_id} ->
-        if (!state[job_id][:plan]) do
+        if (!Map.has_key?(state[:jobs], job_id)) do
+          {:reply, {:error, :unregistered_job}, state}
+        end
+        if (!state[:jobs][job_id][:plan]) do
+          Logger.debug("[SPE #{inspect(self())}]: The plan is not ready yet. Saving client pid")
           # Si no esta listo se lo anota y le contesta cuando la tenga
           new_state =
             update_in(
@@ -63,6 +67,7 @@ defmodule SPE do
   end
 
   def handle_info({:planning, {job_id, job_plan}}, state) do
+    Logger.debug("[SPE #{inspect(self())}]: Receiving plan for #{inspect(job_id)}...")
     new_state =
       update_in(
         state[:jobs][job_id],
@@ -71,7 +76,9 @@ defmodule SPE do
         end
       )
     # De momento, no se manejan posibles errores
+    # Un posible error es querer iniciar un trabajo no registrado
     if (Map.has_key?(state[:waiting], job_id)) do
+      Logger.debug("[SPE #{inspect(self())}]: Replying client waiting...")
       GenServer.reply(state[:waiting][job_id], :ok)
       new_state =
         update_in(
@@ -80,6 +87,7 @@ defmodule SPE do
             Map.delete(clients, job_id)
           end
         )
+      Logger.debug("[SPE #{inspect(self())}]: After replying #{inspect(new_state)}")
       JobManager.start_job(state[:jobs][job_id])
       {:noreply, new_state}
     else
