@@ -6,7 +6,7 @@ defmodule SPE do
     pubsub = Phoenix.PubSub.child_spec(name: SPE.PubSub)
     manager = %{
       id: :manager,
-      start: {JobManager, :start_link, [SPE.JobManager, state[:options]]}
+      start: {JobManager, :start_link, []}
     }
 
 
@@ -36,7 +36,7 @@ defmodule SPE do
           job_id = make_ref()
           new_jobs =
             state[:jobs]
-            |> Map.put(job_id, %{desc: job_desc, plan: nil})
+            |> Map.put(job_id, %{desc: job_desc, plan: nil, num_workers: state[:num_workers]})
 
           spawn_link(Planner.planning(self(), {job_id, job_desc}))
           {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
@@ -93,7 +93,20 @@ defmodule SPE do
   end
 
   def start_link(opts) do
-    GenServer.start_link(__MODULE__, %{options: opts, jobs: %{}}, [name: SPE])
+    if (Keyword.has_key?(opts, :num_workers)) do
+      GenServer.start_link(
+        __MODULE__,
+        %{num_workers: Keyword.get(opts, :num_workers),
+        jobs: %{}}, [name: SPE]
+      )
+    else
+      GenServer.start_link(
+        __MODULE__,
+        %{num_workers: :unbound,
+        jobs: %{}}, [name: SPE]
+      )
+    end
+
   end
 
   def submit_job(job_desc) do
