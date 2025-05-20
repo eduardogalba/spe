@@ -38,7 +38,7 @@ defmodule SPE do
             state[:jobs]
             |> Map.put(job_id, %{desc: job_desc, plan: nil, num_workers: state[:num_workers]})
 
-          spawn_link(Planner.planning(self(), {job_id, job_desc}))
+          spawn_link(Planner, :planning, [self(), {job_id, job_desc}])
           {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
         end
       {:start, job_id} ->
@@ -54,8 +54,8 @@ defmodule SPE do
           {:noreply, new_state}
         else
           JobManager.start_job(state[:jobs][job_id])
+          {:reply, :ok, state}
         end
-        {:reply, GenServer.call(SPE.JobManager, {:start, job_id}), state}
       _ ->
         Logger.error("[SPE #{inspect(self())}]: Request did not match any clause...")
         {:reply, {:error, :invalid_request}, state}
@@ -96,25 +96,26 @@ defmodule SPE do
     if (Keyword.has_key?(opts, :num_workers)) do
       GenServer.start_link(
         __MODULE__,
-        %{num_workers: Keyword.get(opts, :num_workers),
-        jobs: %{}}, [name: SPE]
+        %{num_workers: Keyword.get(opts, :num_workers), jobs: %{}, waiting: %{}},
+        [name: SPE]
       )
     else
       GenServer.start_link(
         __MODULE__,
-        %{num_workers: :unbound,
-        jobs: %{}}, [name: SPE]
+        %{num_workers: :unbound, jobs: %{}, waiting: %{}},
+        [name: SPE]
       )
     end
 
   end
 
   def submit_job(job_desc) do
-    GenServer.cast(SPE, {:submit, job_desc})
+    GenServer.call(SPE, {:submit, job_desc})
   end
 
   def start_job(job_id) do
-    GenServer.cast(SPE, {:start, job_id})
+    # De momento para los tests
+    GenServer.call(SPE, {:start, job_id}, :infinity)
   end
 
   def valid_job?(job) do
