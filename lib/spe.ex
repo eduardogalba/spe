@@ -27,7 +27,7 @@ defmodule SPE do
     end
   end
 
-  def handle_call(request, _from, state) do
+  def handle_call(request, {caller, _}, state) do
     case request do
       {:submit, job_desc} ->
         if (!valid_job?(job_desc)) do
@@ -42,6 +42,19 @@ defmodule SPE do
           {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
         end
       {:start, job_id} ->
+        if (!state[job_id][:plan]) do
+          # Si no esta listo se lo anota y le contesta cuando la tenga
+          new_state =
+            update_in(
+              state[:waiting],
+              fn waiting ->
+                Map.put(waiting, job_id, caller)
+              end
+            )
+          {:noreply, new_state}
+        else
+          JobManager.start_job(state[:jobs][job_id])
+        end
         {:reply, GenServer.call(SPE.JobManager, {:start, job_id}), state}
       _ ->
         Logger.error("[SPE #{inspect(self())}]: Request did not match any clause...")
