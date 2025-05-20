@@ -1,4 +1,4 @@
-defmodule Scheduler do
+defmodule Planner do
   require IEx
 
   def planning(caller, {job_id, job_desc}) do

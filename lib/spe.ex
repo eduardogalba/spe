@@ -38,7 +38,7 @@ defmodule SPE do
             state[:jobs]
             |> Map.put(job_id, %{desc: job_desc, plan: nil})
 
-          spawn_link(Scheduler.planning(self(), {job_id, job_desc}))
+          spawn_link(Planner.planning(self(), {job_id, job_desc}))
           {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
         end
       {:start, job_id} ->
