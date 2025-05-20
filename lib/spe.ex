@@ -33,7 +33,9 @@ defmodule SPE do
         if (!valid_job?(job_desc)) do
           {:reply, {:error, :invalid_description}, state}
         else
-          {:reply, GenServer.call(SPE.JobManager, {:submit, job_desc}), state}
+          job_id = make_ref()
+          spawn_link(Scheduler.planning(self(), {job_id, job_desc}))
+          {:reply, {:ok, job_id}, state}
         end
       {:start, job_id} ->
         {:reply, GenServer.call(SPE.JobManager, {:start, job_id}), state}
