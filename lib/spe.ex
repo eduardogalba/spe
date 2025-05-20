@@ -6,7 +6,7 @@ defmodule SPE do
     pubsub = Phoenix.PubSub.child_spec(name: SPE.PubSub)
     manager = %{
       id: :manager,
-      start: {JobManager, :start_link, []}
+      start: {JobManager, :start_link, [[name: JobManager]]}
     }
 
 

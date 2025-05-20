@@ -1,7 +1,7 @@
 defmodule JobManager do
-  use Supervisor
+  use DynamicSupervisor
 
-  @impl Supervisor
+  @impl DynamicSupervisor
   def init(_init_arg) do
     opts = [
       strategy: :one_for_one,
@@ -12,8 +12,8 @@ defmodule JobManager do
     Supervisor.init([], opts);
   end
 
-  def start_link() do
-    Supervisor.start_link(__MODULE__, [])
+  def start_link(opts) do
+    Supervisor.start_link(__MODULE__, [], opts)
   end
 
   def start_job(job_state) do
