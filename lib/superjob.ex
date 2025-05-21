@@ -1,4 +1,4 @@
-defmodule JobManager do
+defmodule SuperJob do
   use Supervisor
 
   @impl Supervisor
