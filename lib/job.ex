@@ -96,9 +96,13 @@ defmodule Job do
         else
           # De lo contrario, se actualiza el estado y se espera por la terminacion
           # de las demas. Aqui siguen habiendo tareas por terminar.
-          # AQUI se puede optar por analizar undone y las dependencias para encolar
+          # AQUI se puede optar por analizar done y las dependencias para encolar
           # una tarea que no siga el plan estatico y pueda ejecutar. Ojo habria
           # que quitarla del plan
+          # La tarea X se puede ejecutar:
+          # Sii en deps[X] = Y (tareas de las que depende)
+          #   -> Y == nil (Independiente)
+          #   -> Todas las tareas en Y estan en mapa :done (in state[:done])
           {:noreply, new_state}
         end
 
@@ -106,15 +110,18 @@ defmodule Job do
     end
   end
 
-  def handle_info({:DOWN, monitor_ref, :process, _pid, reason}, state) do
-    case Map.get(state, monitor_ref) do
+  def handle_info({:DOWN, monitor_ref, :process, pid, reason}, state) do
+    case Map.get(state[:refs], monitor_ref) do
       nil ->
-        Logger.debug("[Job #{inspect(self())}]: Monitor unknown")
+        Logger.debug("[Job #{inspect(self())}]: Monitor ref : #{inspect(monitor_ref)} unknown: pid: #{inspect(pid)}")
         {:noreply, state}
       {_task_pid, task_name} ->
         # Aqui se gestiona si el proceso ha cerrado anomalamente
         # Yo optaria por analizar las dependencias, marcarlas como :not_run
         # y quitarlas de las tareas pendientes (state[:plan])
+
+        # Realiza el mismo comportamiento que antes con handle_info({:failed, ..})
+        # las marca como not_run y las quita del plan
         if (reason != :normal) do
           Logger.info("[Job #{inspect(self())}]: Handling task failing...")
           new_undone = List.delete(state[:undone], task_name)
@@ -189,7 +196,7 @@ defmodule Job do
       [first_tasks | next_tasks] ->
         Logger.info("[Job #{inspect(self())}]: Starting tasks #{inspect(first_tasks)}")
         job_id = state[:id]
-        # Olvidamos Supervisor por ahora, las primeras tareas no requieren args por eso nil
+
         refs =
           Enum.reduce(
             first_tasks,
