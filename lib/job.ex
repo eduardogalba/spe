@@ -103,7 +103,25 @@ defmodule Job do
           # Sii en deps[X] = Y (tareas de las que depende)
           #   -> Y == nil (Independiente)
           #   -> Todas las tareas en Y estan en mapa :done (in state[:done])
-          {:noreply, new_state}
+          next_tasks = List.flatten(state[:plan])
+          done_tasks = Map.keys(state[:done])
+          case Planner.find_next_independent(next_tasks, state[:deps], done_tasks, state[:undone]) do
+            nil ->
+              {:noreply, new_state}
+            next_task ->
+              new_plan = Planner.complete_task(state[:plan], next_task, [])
+              new_undone = List.delete(state[:undone], next_task)
+              {task_pid, ref} = spawn_monitor(SPETask, :apply, [state[:id], next_task, state[:tasks][next_task]["exec"], [state[:done]]])
+              new_refs = Map.put(state[:refs], ref, {task_pid, next_task})
+              final_state =
+                new_state
+                |> Map.put(:plan, new_plan)
+                |> Map.put(:undone, new_undone)
+                |> Map.put(:refs, new_refs)
+
+              {:noreply, final_state}
+          end
+
         end
 
 
@@ -203,7 +221,6 @@ defmodule Job do
             %{},
             fn task, acc ->
               case task do
-                nil -> acc
                 task_name ->
                   {task_pid, ref} = spawn_monitor(SPETask, :apply, [job_id, task_name, state[:tasks][task_name]["exec"], [state[:done]]])
                   Map.put(acc, ref, {task_pid, task_name})
@@ -211,15 +228,11 @@ defmodule Job do
             end
           )
 
-        cleaned_undone =
-          first_tasks
-          |> Enum.filter(&(&1))
-
         new_refs = Map.merge(state[:refs], refs)
 
         state
           |> Map.put(:plan, next_tasks)
-          |> Map.put(:undone, cleaned_undone)
+          |> Map.put(:undone, first_tasks)
           |> Map.put(:refs, new_refs)
 
       _ ->
