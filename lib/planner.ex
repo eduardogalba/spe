@@ -35,7 +35,7 @@ defmodule Planner do
     plan = group_tasks(planned, tasks_dependencies, num_workers)
 
 
-    send(caller, {:planning, {job_id, plan}})
+    send(caller, {:planning, {job_id, plan, tasks_dependencies}})
 
   end
 
