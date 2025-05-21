@@ -6,7 +6,7 @@ defmodule SPE do
     pubsub = Phoenix.PubSub.child_spec(name: SPE.PubSub)
     manager = %{
       id: :manager,
-      start: {JobManager, :start_link, [[name: JobManager]]}
+      start: {SuperJob, :start_link, [[name: SuperJob]]}
     }
 
 
@@ -36,7 +36,7 @@ defmodule SPE do
           job_id = make_ref()
           new_jobs =
             state[:jobs]
-            |> Map.put(job_id, %{desc: job_desc, plan: nil, num_workers: state[:num_workers]})
+            |> Map.put(job_id, %{desc: job_desc, plan: nil, deps: %{}, num_workers: state[:num_workers]})
 
           spawn_link(Planner, :planning, [self(), {job_id, job_desc}, state[:num_workers]])
           {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
@@ -58,7 +58,7 @@ defmodule SPE do
           {:noreply, new_state}
         else
           job = Map.put(state[:jobs][job_id], :id, job_id)
-          case JobManager.start_job(job) do
+          case SuperJob.start_job(job) do
             {:ok, _} -> {:reply, :ok, state}
             any -> {:reply, any, state}
           end
@@ -70,15 +70,19 @@ defmodule SPE do
     end
   end
 
-  def handle_info({:planning, {job_id, job_plan}}, state) do
+  def handle_info({:planning, {job_id, job_plan, deps}}, state) do
     Logger.debug("[SPE #{inspect(self())}]: Receiving plan for #{inspect(job_id)}...")
+    tasks =
+      Enum.into(state[:desc]["tasks"], %{}, fn task_desc ->
+        {task_desc["name"], task_desc}
+      end)
+
     new_state =
-      update_in(
-        state[:jobs][job_id],
-        fn job ->
-          Map.put(job, :plan, job_plan)
-        end
-      )
+      update_in(state[:jobs][job_id], fn job ->Map.put(job, :plan, job_plan) end)
+      |> Map.put(:deps, deps)
+      |> Map.delete(:desc) # La descripcion entera es innecesaria
+      |> Map.put(:tasks, tasks)
+
     # De momento, no se manejan posibles errores
     # Un posible error es querer iniciar un trabajo no registrado
     if (Map.has_key?(state[:waiting], job_id)) do
@@ -93,7 +97,7 @@ defmodule SPE do
         )
       Logger.debug("[SPE #{inspect(self())}]: After replying #{inspect(new_state)}")
       job = Map.put(state[:jobs][job_id], :id, job_id)
-      case JobManager.start_job(job) do
+      case SuperJob.start_job(job) do
             {:ok, _} -> GenServer.reply(state[:waiting][job_id], :ok)
             any -> GenServer.reply(state[:waiting][job_id], any)
       end

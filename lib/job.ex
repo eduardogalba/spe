@@ -29,19 +29,13 @@ defmodule Job do
     # Quiero solo las descripciones de tarea como un mapa y no toda la descripción teniendo
     # las tareas como una lista
     Logger.debug("Iniciando trabajo...")
-    tasks =
-      Enum.into(state[:desc]["tasks"], %{}, fn task_desc ->
-        {task_desc["name"], task_desc}
-      end)
 
     new_state =
       state
-      |> Map.delete(:desc)
-      |> Map.put(:tasks, tasks)
       |> Map.put(:refs, %{})
-      |> Map.put(:done, %{})
+      |> Map.put(:done, %{}) # Esto tambien sirve para los argumentos de las tareas
       |> Map.put(:undone, [])
-      |> Map.put(:time_start, :erlang.monotonic_time(:millisecond))
+      |> Map.put(:time_start, :erlang.monotonic_time(:millisecond)) # Empieza el cronometro
 
     GenServer.start_link(__MODULE__, new_state, [])
   end
