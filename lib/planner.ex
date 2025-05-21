@@ -39,19 +39,39 @@ defmodule Planner do
 
   end
 
+  def find_next_independent([], _deps, _done), do: nil
+  def find_next_independent([task | rest], deps, undone, done) do
+    # PRE: La lista de tareas es flatten, nada de listas dentro de listas
+    task_deps = Map.get(deps, task)
+
+    if !task_deps or (Enum.all?(task_deps, &(&1 in done)) and !Enum.any?(task_deps, &(&1 in undone))) do
+      task
+    else
+      find_next_independent(rest, deps, undone, done)
+    end
+  end
+
+  def complete_task([], _task, new_tasks), do: new_tasks
+  def complete_task([task_level | rest], task, acc) do
+    if task in task_level do
+      complete_task(rest, task, acc ++ [List.delete(task_level, task)])
+    else
+      complete_task(rest, task, acc ++ [task_level])
+    end
+  end
+
   defp group_tasks([], _deps, _num_workers), do: []
   defp group_tasks(tasks, deps, num_workers) do
     {group, rest} = take_independent(tasks, deps, num_workers, [])
-    filled_group = group ++ List.duplicate(nil, num_workers - length(group))
-    [filled_group | group_tasks(rest, deps, num_workers)]
+    [group | group_tasks(rest, deps, num_workers)]
   end
 
   defp take_independent([], _deps, _nworkers, acc), do: {Enum.reverse(acc), []}
   defp take_independent(tasks, _deps, 0, acc), do: {Enum.reverse(acc), tasks}
   defp take_independent([t | ts], deps, nworkers, acc) do
     if Enum.any?(acc, fn a -> t in Map.get(deps, a, []) or a in Map.get(deps, t, []) end) do
-      # Si es dependiente de alguna de la lista rellena con nil y sigue buscando
-      {taken, remaining} = take_independent(ts, deps, nworkers, [nil |acc])
+      # Pasamos de añadir nils innecesario la lista son de tamaño maximo num_workers
+      {taken, remaining} = take_independent(ts, deps, nworkers - 1, acc)
       # Selecciona otro y postpone esta tarea
       {taken, [t | remaining]}
     else
