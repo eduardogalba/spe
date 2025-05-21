@@ -5,14 +5,7 @@ defmodule SPETask do
     tick = :erlang.monotonic_time(:millisecond)
     Logger.debug("[SPETask #{inspect(self())}]: Task #{inspect(task_name)} Arguments #{inspect(args)}")
 
-    result =
-      try do
-        {:result, Kernel.apply(function, args)}
-      rescue
-        e ->
-          Logger.error("[SPETask #{inspect(self())}]: Failing with exception #{inspect(e)}")
-          {:failed, e}
-      end
+    result =  {:result, Kernel.apply(function, args)}
 
     tac = :erlang.monotonic_time(:millisecond)
 
