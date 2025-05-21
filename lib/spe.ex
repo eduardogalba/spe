@@ -72,16 +72,22 @@ defmodule SPE do
 
   def handle_info({:planning, {job_id, job_plan, deps}}, state) do
     Logger.debug("[SPE #{inspect(self())}]: Receiving plan for #{inspect(job_id)}...")
+    Logger.debug("[SPE #{inspect(self())}]: Tengo en state #{inspect(state)}")
+
     tasks =
-      Enum.into(state[:desc]["tasks"], %{}, fn task_desc ->
+      Enum.into(state[:jobs][job_id][:desc]["tasks"], %{}, fn task_desc ->
         {task_desc["name"], task_desc}
       end)
 
-    new_state =
-      update_in(state[:jobs][job_id], fn job ->Map.put(job, :plan, job_plan) end)
+    new_job =
+      Map.put(state[:jobs][job_id], :plan, job_plan)
       |> Map.put(:deps, deps)
       |> Map.delete(:desc) # La descripcion entera es innecesaria
       |> Map.put(:tasks, tasks)
+
+    new_state = update_in(state[:jobs], fn jobs ->Map.put(jobs, job_id, new_job) end)
+
+    Logger.debug("[SPE #{inspect(self())}]: Tengo nuevo state #{inspect(new_state)}")
 
     # De momento, no se manejan posibles errores
     # Un posible error es querer iniciar un trabajo no registrado
