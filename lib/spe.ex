@@ -4,11 +4,11 @@ defmodule SPE do
 
   def init(state) do
     pubsub = Phoenix.PubSub.child_spec(name: SPE.PubSub)
+
     manager = %{
       id: :manager,
       start: {SuperJob, :start_link, [[name: SuperJob]]}
     }
-
 
     children = [
       pubsub,
@@ -16,13 +16,20 @@ defmodule SPE do
     ]
 
     Logger.info("[SPE #{inspect(self())}]: Server starting...")
+
     case Supervisor.start_link(children, strategy: :one_for_one) do
-      {:ok, supv} -> {:ok, Map.put(state, :supv, supv)}
+      {:ok, supv} ->
+        {:ok, Map.put(state, :supv, supv)}
+
       {:error, {:already_started, _}} = error ->
         Logger.error("[SPE #{inspect(self())}]: Server is already started.")
         error
+
       {:error, {:shutdown, reason}} ->
-        Logger.error("[SPE #{inspect(self())}]: One of the child processes is crashing caused by #{inspect(reason)}")
+        Logger.error(
+          "[SPE #{inspect(self())}]: One of the child processes is crashing caused by #{inspect(reason)}"
+        )
+
         reason
     end
   end
@@ -34,6 +41,7 @@ defmodule SPE do
           {:reply, {:error, :invalid_description}, state}
         else
           job_id = make_ref()
+
           new_jobs =
             state[:jobs]
             |> Map.put(job_id, %{desc: job_desc, plan: nil, enables: %{}, num_workers: state[:num_workers]})
@@ -41,11 +49,13 @@ defmodule SPE do
           spawn_link(Planner, :planning, [self(), {job_id, job_desc}, state[:num_workers]])
           {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
         end
+
       {:start, job_id} ->
-        if (!Map.has_key?(state[:jobs], job_id)) do
+        if !Map.has_key?(state[:jobs], job_id) do
           {:reply, {:error, :unregistered_job}, state}
         end
-        if (!state[:jobs][job_id][:plan]) do
+
+        if !state[:jobs][job_id][:plan] do
           Logger.debug("[SPE #{inspect(self())}]: The plan is not ready yet. Saving client pid")
           # Si no esta listo se lo anota y le contesta cuando la tenga
           new_state =
@@ -55,6 +65,7 @@ defmodule SPE do
                 Map.put(waiting, job_id, from)
               end
             )
+
           {:noreply, new_state}
         else
           job = Map.put(state[:jobs][job_id], :id, job_id)
@@ -62,8 +73,8 @@ defmodule SPE do
             {:ok, _} -> {:reply, :ok, state}
             any -> {:reply, any, state}
           end
-
         end
+
       _ ->
         Logger.error("[SPE #{inspect(self())}]: Request did not match any clause...")
         {:reply, {:error, :invalid_request}, state}
@@ -108,7 +119,7 @@ defmodule SPE do
 
     # De momento, no se manejan posibles errores
     # Un posible error es querer iniciar un trabajo no registrado
-    if (Map.has_key?(state[:waiting], job_id)) do
+    if Map.has_key?(state[:waiting], job_id) do
       Logger.debug("[SPE #{inspect(self())}]: Replying client waiting...")
 
       new_state =
@@ -118,6 +129,7 @@ defmodule SPE do
             Map.delete(clients, job_id)
           end
         )
+
       Logger.debug("[SPE #{inspect(self())}]: After replying #{inspect(new_state)}")
       job = Map.put(new_state[:jobs][job_id], :id, job_id)
       Logger.info("Creando trabajo: #{inspect(job)}")
@@ -125,11 +137,11 @@ defmodule SPE do
             {:ok, _} -> GenServer.reply(state[:waiting][job_id], :ok)
             any -> GenServer.reply(state[:waiting][job_id], any)
       end
+
       {:noreply, new_state}
     else
       {:noreply, new_state}
     end
-
   end
 
   def handle_info(msg, state) do
@@ -139,20 +151,19 @@ defmodule SPE do
   end
 
   def start_link(opts) do
-    if (Keyword.has_key?(opts, :num_workers)) do
+    if Keyword.has_key?(opts, :num_workers) do
       GenServer.start_link(
         __MODULE__,
         %{num_workers: Keyword.get(opts, :num_workers), jobs: %{}, waiting: %{}},
-        [name: SPE]
+        name: SPE
       )
     else
       GenServer.start_link(
         __MODULE__,
         %{num_workers: :unbound, jobs: %{}, waiting: %{}},
-        [name: SPE]
+        name: SPE
       )
     end
-
   end
 
   def submit_job(job_desc) do
