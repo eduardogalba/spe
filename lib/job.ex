@@ -42,60 +42,6 @@ defmodule Job do
 
   def handle_info({:task_terminated, {task_name, result}}, state) do
     case result do
-      {:failed, _} ->
-        Logger.info("[Job #{inspect(self())}]: Handling task failing...")
-        new_undone = List.delete(state[:undone], task_name)
-        disable_tasks =
-          case state[:tasks][task_name]["enables"] do
-            nil -> []
-            _ -> Tuple.to_list(state[:tasks][task_name]["enables"])
-          end
-
-        if disable_tasks == [] do
-          new_done = Map.put(state[:done], task_name, result)
-          new_state =
-            state
-            |> Map.put(:undone, new_undone)
-            |> Map.put(:done, new_done)
-
-          {:noreply, new_state}
-        else
-
-          new_plan =
-            Enum.reduce(
-              disable_tasks,
-              fn d_task ->
-                Enum.map(
-                  state[:plan],
-                  fn next_tasks ->
-                    List.delete(next_tasks, d_task)
-                  end
-                )
-              end
-            )
-
-          IO.puts("Nuevo plan: #{inspect(new_plan)}")
-
-          new_done =
-            Enum.reduce(
-              disable_tasks,
-              fn d_task ->
-                Map.put(state[:done], d_task, :not_run)
-              end
-            )
-            |> Map.put(task_name, result)
-
-          IO.puts("Tareas hechas #{inspect(new_done)}")
-          # Actualiza el estado con los nuevos valores
-          new_state =
-            state
-            |> Map.put(:done, new_done)
-            |> Map.put(:undone, new_undone)
-            |> Map.put(:plan, new_plan)
-
-          {:noreply, new_state}
-    end
-
       {:result, value} ->
         Logger.info("[Job #{inspect(self())}]: Handling task ending...")
         new_undone = List.delete(state[:undone], task_name)
@@ -169,7 +115,63 @@ defmodule Job do
         # Aqui se gestiona si el proceso ha cerrado anomalamente
         # Yo optaria por analizar las dependencias, marcarlas como :not_run
         # y quitarlas de las tareas pendientes (state[:plan])
-        {:noreply, state}
+        if (reason != :normal) do
+          Logger.info("[Job #{inspect(self())}]: Handling task failing...")
+          new_undone = List.delete(state[:undone], task_name)
+          disable_tasks =
+            case state[:tasks][task_name]["enables"] do
+              nil -> []
+              _ -> Tuple.to_list(state[:tasks][task_name]["enables"])
+            end
+
+          result = {:failed, {:crashed, reason}}
+          if disable_tasks == [] do
+            new_done = Map.put(state[:done], task_name, result)
+            new_state =
+              state
+              |> Map.put(:undone, new_undone)
+              |> Map.put(:done, new_done)
+
+            {:noreply, new_state}
+          else
+
+            new_plan =
+              Enum.reduce(
+                disable_tasks,
+                fn d_task ->
+                  Enum.map(
+                    state[:plan],
+                    fn next_tasks ->
+                      List.delete(next_tasks, d_task)
+                    end
+                  )
+                end
+              )
+
+            IO.puts("Nuevo plan: #{inspect(new_plan)}")
+
+            new_done =
+              Enum.reduce(
+                disable_tasks,
+                fn d_task ->
+                  Map.put(state[:done], d_task, :not_run)
+                end
+              )
+              |> Map.put(task_name, result)
+
+            IO.puts("Tareas hechas #{inspect(new_done)}")
+            # Actualiza el estado con los nuevos valores
+            new_state =
+              state
+              |> Map.put(:done, new_done)
+              |> Map.put(:undone, new_undone)
+              |> Map.put(:plan, new_plan)
+
+            {:noreply, new_state}
+          end
+        else
+          {:noreply, state}
+        end
     end
   end
 
