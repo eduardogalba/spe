@@ -2,7 +2,7 @@ defmodule SuperJob do
   use Supervisor
 
   @impl Supervisor
-  def init(num_workers) do
+  def init(info) do
     opts = [
       strategy: :one_for_one,
       max_restarts: 1,
@@ -10,11 +10,15 @@ defmodule SuperJob do
     ]
 
     workers =
-      for i <- 1..num_workers do
-        %{
-          id: :"worker_#{i}",
-          start: {Worker, :start_link, [[name: :"worker_#{i}"]]}
-        }
+      if(Map.get(info, :num_workers, :unbound) != :unbound) do
+        for i <- 1..Map.get(info, :num_workers, 1) do
+          %{
+            id: :"worker_#{i}",
+            start: {Worker, :start_link, [[name: :"worker_#{i}"]]}
+          }
+        end
+      else
+        []
       end
 
     Supervisor.init(workers, opts)
