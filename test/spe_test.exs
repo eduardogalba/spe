@@ -29,12 +29,27 @@ defmodule SPETest do
           "name" => "task5",
           "exec" => fn %{"task2" => v2, "task3" => v3, "task4" => v4} ->
             IO.puts("value: #{inspect(v2 + v3 + v4)}")
-          end
+          end,
+          "enables" => {"task7"}
         },
         %{
           "name" => "task6",
           "exec" => fn _ -> IO.puts("hello") end
+        },
+        %{
+          "name" => "task7",
+          "exec" => fn %{"task2" => v2, "task3" => v3, "task4" => v4} ->
+            IO.puts("value: #{inspect(v2 + v3 + v4)}")
+          end,
+          "enables" => {"task8"}
+        },
+        %{
+          "name" => "task8",
+          "exec" => fn %{"task2" => v2, "task3" => v3, "task4" => v4} ->
+            raise "Excepcion"
+          end
         }
+
       ]
     }
 
@@ -42,9 +57,10 @@ defmodule SPETest do
 
     {:ok, job_id} = SPE.submit_job(desc)
 
+    Phoenix.PubSub.subscribe(SPE.PubSub, "#{inspect(job_id)}")
+
     SPE.start_job(job_id)
 
-    Phoenix.PubSub.subscribe(SPE.PubSub, "#{inspect(job_id)}")
 
     receive_wait()
   end
