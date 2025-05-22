@@ -27,7 +27,7 @@ defmodule SPE do
     end
   end
 
-  def handle_call(request, {caller, _}, state) do
+  def handle_call(request, from, state) do
     case request do
       {:submit, job_desc} ->
         if (!Validator.valid_job?(job_desc)) do
@@ -52,7 +52,7 @@ defmodule SPE do
             update_in(
               state[:waiting],
               fn waiting ->
-                Map.put(waiting, job_id, caller)
+                Map.put(waiting, job_id, from)
               end
             )
           {:noreply, new_state}
@@ -102,7 +102,8 @@ defmodule SPE do
           end
         )
       Logger.debug("[SPE #{inspect(self())}]: After replying #{inspect(new_state)}")
-      job = Map.put(state[:jobs][job_id], :id, job_id)
+      job = Map.put(new_state[:jobs][job_id], :id, job_id)
+      Logger.info("Creando trabajo: #{inspect(job)}")
       case SuperJob.start_job(job) do
             {:ok, _} -> GenServer.reply(state[:waiting][job_id], :ok)
             any -> GenServer.reply(state[:waiting][job_id], any)
@@ -114,7 +115,9 @@ defmodule SPE do
 
   end
 
-  def handle_info(_, state) do
+  def handle_info(msg, state) do
+    Logger.info("Info generico")
+    Logger.info("#{inspect(msg)}")
     {:noreply, state}
   end
 
@@ -141,7 +144,7 @@ defmodule SPE do
 
   def start_job(job_id) do
     # De momento para los tests
-    GenServer.call(SPE, {:start, job_id}, :infinity)
+    GenServer.call(SPE, {:start, job_id})
   end
 
 end
