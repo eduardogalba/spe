@@ -1,15 +1,41 @@
 defmodule SPETask do
   require Logger
 
-  def apply(job_id, task_name, function, args) do
+  def apply(job_id, task_name, timeout, function, args) do
     tick = :erlang.monotonic_time(:millisecond)
+    effective_timeout = if !timeout, do: :infinity, else: timeout
     Logger.debug("[SPETask #{inspect(self())}]: Task #{inspect(task_name)} Arguments #{inspect(args)}")
 
-    result =  {:result, Kernel.apply(function, args)}
+    task_fun = fn ->
+      try do
+        Kernel.apply(function, args)
+      rescue
+        exception ->
+          Logger.debug("[#{inspect(task_name)}]: Capturada excepción en el hijo: #{inspect(exception)}")
+          {:failed, {:crashed, Exception.message(exception)}}
+      catch
+        kind, reason ->
+          Logger.debug("[#{inspect(task_name)}]: Capturado catch en el hijo: #{inspect(kind)}, #{inspect(reason)}")
+          {:failed, {:crashed, reason}}
+      end
+    end
+
+    task = Task.async(task_fun)
+
+    Logger.debug("[SPETask #{inspect(self())}]: Primera linea de defensa atravesada")
+
+    result =
+        case Task.await(task, effective_timeout) do
+          nil ->
+            Logger.debug("No se ha completado la tarea a tiempo.")
+            {:failed, :timeout}
+          res -> {:result, res}
+        end
+
 
     tac = :erlang.monotonic_time(:millisecond)
 
-    Logger.info("[SPETask #{inspect(self())}]: Sending to PubSub message queue #{inspect(result)}")
+    Logger.debug("[SPETask #{inspect(self())}]: Sending to PubSub message queue #{inspect(result)}")
 
     # Comunicación a Job de que ha terminado
     Phoenix.PubSub.broadcast(
