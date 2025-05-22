@@ -103,25 +103,31 @@ defmodule Job do
           # Sii en deps[X] = Y (tareas de las que depende)
           #   -> Y == nil (Independiente)
           #   -> Todas las tareas en Y estan en mapa :done (in state[:done])
-          next_tasks = List.flatten(state[:plan])
-          done_tasks = Map.keys(state[:done])
-          case Planner.find_next_independent(next_tasks, state[:deps], done_tasks, state[:undone]) do
-            nil ->
-              {:noreply, new_state}
-            next_task ->
-              new_plan = Planner.complete_task(state[:plan], next_task, [])
-              new_undone = List.delete(state[:undone], next_task)
-              {task_pid, ref} = spawn_monitor(SPETask, :apply, [state[:id], next_task, state[:tasks][next_task]["exec"], [state[:done]]])
-              new_refs = Map.put(state[:refs], ref, {task_pid, next_task})
-              final_state =
-                new_state
-                |> Map.put(:plan, new_plan)
-                |> Map.put(:undone, new_undone)
-                |> Map.put(:refs, new_refs)
-
-              {:noreply, final_state}
-          end
-
+            # Logger.info("Entro por aqui")
+            #
+            # next_tasks = List.flatten(state[:plan])
+            # done_tasks = Map.keys(state[:done])
+            # Logger.info("Tareas realizadas: #{inspect(done_tasks)}")
+            # Logger.info("Tareas en ejecucion: #{inspect(state[:undone])}")
+            # Logger.info("Dependencias: #{inspect(state[:deps])}")
+            # Logger.info("Tareas por realizar: #{inspect(next_tasks)}")
+            # case Planner.find_next_independent(next_tasks, state[:deps], done_tasks, state[:undone]) do
+            #   nil ->
+            #     {:noreply, new_state}
+            #   next_task ->
+            #     new_plan = Planner.complete_task(state[:plan], next_task, [])
+            #     new_undone = List.delete(state[:undone], next_task)
+            #     {task_pid, ref} = spawn_monitor(SPETask, :apply, [state[:id], next_task, state[:tasks][next_task]["exec"], [state[:done]]])
+            #     new_refs = Map.put(state[:refs], ref, {task_pid, next_task})
+            #     final_state =
+            #       new_state
+            #       |> Map.put(:plan, new_plan)
+            #       |> Map.put(:undone, new_undone)
+            #       |> Map.put(:refs, new_refs)
+            #
+            #     {:noreply, final_state}
+            # end
+            {:noreply, new_state}
         end
 
 

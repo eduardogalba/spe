@@ -60,24 +60,32 @@ defmodule Planner do
     end
   end
 
-  defp group_tasks([], _deps, _num_workers), do: []
-  defp group_tasks(tasks, deps, num_workers) do
-    {group, rest} = take_independent(tasks, deps, num_workers, [])
+  def group_tasks([], _deps, _num_workers), do: []
+  def group_tasks(tasks, deps, num_workers) do
+    {group, rest} = take_independent(tasks, deps, num_workers, [], [])
     [group | group_tasks(rest, deps, num_workers)]
   end
 
-  defp take_independent([], _deps, _nworkers, acc), do: {Enum.reverse(acc), []}
-  defp take_independent(tasks, _deps, 0, acc), do: {Enum.reverse(acc), tasks}
-  defp take_independent([t | ts], deps, nworkers, acc) do
-    if Enum.any?(acc, fn a -> t in Map.get(deps, a, []) or a in Map.get(deps, t, []) end) do
-      # Pasamos de añadir nils innecesario la lista son de tamaño maximo num_workers
-      {taken, remaining} = take_independent(ts, deps, nworkers - 1, acc)
-      # Selecciona otro y postpone esta tarea
-      {taken, [t | remaining]}
-    else
-      # Si no dependiente la inserta
-      take_independent(ts, deps, nworkers - 1, [t | acc])
+  defp take_independent([], _deps, _nworkers, task_floor, _rechazados), do: {Enum.reverse(task_floor), []}
+  defp take_independent(tasks, _deps, 0, task_floor, _rechazados), do: {Enum.reverse(task_floor), tasks}
+  defp take_independent([t | ts], deps, nworkers, task_floor, rechazados) do
+
+    cond do
+      Enum.any?(rechazados, fn a -> t in Map.get(deps, a, []) or a in Map.get(deps, t, []) end) ->
+        # Pasamos de añadir nils innecesario la lista son de tamaño maximo num_workers
+        {taken, remaining} = take_independent(ts, deps, nworkers - 1, task_floor, rechazados)
+        # Selecciona otro y postpone esta tarea
+        {taken, [t | remaining]}
+
+      Enum.any?(task_floor, fn a -> t in Map.get(deps, a, []) or a in Map.get(deps, t, []) end) ->
+        # Pasamos de añadir nils innecesario la lista son de tamaño maximo num_workers
+        {taken, remaining} = take_independent(ts, deps, nworkers - 1, task_floor, [t | rechazados])
+        # Selecciona otro y postpone esta tarea
+        {taken, [t | remaining]}
+
+      true -> take_independent(ts, deps, nworkers - 1, [t | task_floor], rechazados)
     end
+
   end
 
   def khan_loop(dependencies, free_tasks, planned) do
