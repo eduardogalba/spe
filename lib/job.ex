@@ -130,6 +130,8 @@ defmodule Job do
             {:noreply, new_state}
         end
 
+      {:failed, value} ->
+        IO.puts("Entra al handle info #{inspect(value)}")
 
     end
   end
@@ -154,7 +156,7 @@ defmodule Job do
               nil -> []
               _ -> Tuple.to_list(state[:tasks][task_name]["enables"])
             end
-
+          Logger.info("[Job #{inspect(self())}]: Que falta por hacer #{inspect(new_undone)}...")
           result = {:failed, {:crashed, reason}}
           if disable_tasks == [] do
             new_done = Map.put(state[:done], task_name, result)
@@ -162,6 +164,7 @@ defmodule Job do
               state
               |> Map.put(:undone, new_undone)
               |> Map.put(:done, new_done)
+            Logger.info("[Job #{inspect(self())}]: Despues de corregir: #{inspect(new_state)}")
 
             {:noreply, new_state}
           else
@@ -228,7 +231,7 @@ defmodule Job do
             fn task, acc ->
               case task do
                 task_name ->
-                  {task_pid, ref} = spawn_monitor(SPETask, :apply, [job_id, task_name, state[:tasks][task_name]["exec"], [state[:done]]])
+                  {task_pid, ref} = spawn_monitor(SPETask, :apply, [job_id, task_name, state[:tasks]["timeout"], state[:tasks][task_name]["exec"], [state[:done]]])
                   Map.put(acc, ref, {task_pid, task_name})
                 end
             end
@@ -242,7 +245,8 @@ defmodule Job do
           |> Map.put(:refs, new_refs)
 
       _ ->
-        Logger.error("[Job #{inspect(self())}]: Something is strange in tasks plan")
+        Logger.info("[Job #{inspect(self())}]: Something is strange in tasks plan")
+        Logger.info("Esto es lo que me llega: #{inspect(state[:plan])}")
         :not_matched
       end
   end
