@@ -35,7 +35,7 @@ defmodule Planner do
     plan = group_tasks(planned, tasks_dependencies, num_workers)
 
 
-    send(caller, {:planning, {job_id, plan, tasks_dependencies}})
+    send(caller, {:planning, {job_id, plan}})
 
   end
 
@@ -49,6 +49,19 @@ defmodule Planner do
     else
       find_next_independent(rest, deps, undone, done)
     end
+  end
+
+  def find_dependent_tasks(enables, start_task) do
+    find_dependent_tasks_(enables, [start_task], [])
+  end
+
+  defp find_dependent_tasks_(_enables, [], acc), do: acc
+  defp find_dependent_tasks_(enables, [task | rest], acc) do
+    dependent_tasks = Map.get(enables, task, [])
+
+    new_tasks = Enum.filter(dependent_tasks, &(!Enum.member?(acc, &1)))
+
+    find_dependent_tasks_(enables, rest ++ new_tasks, acc ++ new_tasks)
   end
 
   def complete_task([], _task, new_tasks), do: new_tasks
