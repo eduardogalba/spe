@@ -36,7 +36,7 @@ defmodule SPE do
           job_id = make_ref()
           new_jobs =
             state[:jobs]
-            |> Map.put(job_id, %{desc: job_desc, plan: nil, deps: %{}, num_workers: state[:num_workers]})
+            |> Map.put(job_id, %{desc: job_desc, plan: nil, enables: %{}, num_workers: state[:num_workers]})
 
           spawn_link(Planner, :planning, [self(), {job_id, job_desc}, state[:num_workers]])
           {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
@@ -70,18 +70,35 @@ defmodule SPE do
     end
   end
 
-  def handle_info({:planning, {job_id, job_plan, deps}}, state) do
+  def handle_info({:planning, {job_id, job_plan}}, state) do
     Logger.debug("[SPE #{inspect(self())}]: Receiving plan for #{inspect(job_id)}...")
     Logger.debug("[SPE #{inspect(self())}]: Tengo en state #{inspect(state)}")
 
     tasks =
-      Enum.into(state[:jobs][job_id][:desc]["tasks"], %{}, fn task_desc ->
-        {task_desc["name"], task_desc}
+      Enum.reduce(
+        state[:jobs][job_id][:desc]["tasks"],
+        %{},
+        fn task_desc, acc ->
+          Map.put(acc, task_desc["name"], task_desc)
+        end)
+      Logger.debug("[SPE #{inspect(self())}]: Tengo en tasks #{inspect(tasks)}")
+
+    enables =
+      Enum.reduce(tasks,
+        %{},
+        fn  {task_name, desc} , acc ->
+          if (desc["enables"]) do
+            Map.put(acc, task_name, Tuple.to_list(desc["enables"]))
+          else
+            acc
+          end
       end)
+
+    Logger.debug("[SPE #{inspect(self())}]: Tengo en enables #{inspect(enables)}")
 
     new_job =
       Map.put(state[:jobs][job_id], :plan, job_plan)
-      |> Map.put(:deps, deps)
+      |> Map.put(:enables, enables)
       |> Map.delete(:desc) # La descripcion entera es innecesaria
       |> Map.put(:tasks, tasks)
 
