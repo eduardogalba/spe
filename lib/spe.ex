@@ -37,18 +37,14 @@ defmodule SPE do
   def handle_call(request, from, state) do
     case request do
       {:submit, job_desc} ->
-        if (!Validator.valid_job?(job_desc)) do
-          {:reply, {:error, :invalid_description}, state}
-        else
-          job_id = make_ref()
+        job_id = make_ref()
 
-          new_jobs =
-            state[:jobs]
-            |> Map.put(job_id, %{desc: job_desc, plan: nil, enables: %{}, num_workers: state[:num_workers]})
+        new_jobs =
+          state[:jobs]
+          |> Map.put(job_id, %{desc: job_desc, plan: nil, enables: %{}, num_workers: state[:num_workers]})
 
-          spawn_link(Planner, :planning, [self(), {job_id, job_desc}, state[:num_workers]])
-          {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
-        end
+        spawn_link(Planner, :planning, [self(), {job_id, job_desc}, state[:num_workers]])
+        {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
 
       {:start, job_id} ->
         if !Map.has_key?(state[:jobs], job_id) do
@@ -167,7 +163,11 @@ defmodule SPE do
   end
 
   def submit_job(job_desc) do
-    GenServer.call(SPE, {:submit, job_desc})
+    if (!Validator.valid_job?(job_desc)) do
+      {:error, :invalid_description}
+    else
+      GenServer.call(SPE, {:submit, job_desc})
+    end
   end
 
   def start_job(job_id) do
@@ -175,4 +175,4 @@ defmodule SPE do
     GenServer.call(SPE, {:start, job_id})
   end
 
-end
+ end
