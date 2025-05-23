@@ -12,8 +12,8 @@ defmodule SuperJob do
     Supervisor.init([], opts)
   end
 
-  def start_link(opts) do
-    Supervisor.start_link(__MODULE__, [], opts)
+  def start_link() do
+    Supervisor.start_link(__MODULE__, [], name: SPE.SuperJob)
   end
 
   def start_job(job_state) do
@@ -24,7 +24,7 @@ defmodule SuperJob do
         restart: :transient
       }
 
-    Supervisor.start_child(__MODULE__, child_spec)
+    Supervisor.start_child(SPE.SuperJob, child_spec)
   end
 
 end

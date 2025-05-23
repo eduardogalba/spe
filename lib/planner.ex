@@ -1,7 +1,7 @@
 defmodule Planner do
   require IEx
 
-  def planning(caller, {job_id, job_desc}, num_workers) do
+  def planning(job_id, job_desc, num_workers) do
     tasks = job_desc["tasks"]
     # Preparing Kahn´s algorithm
 
@@ -34,9 +34,7 @@ defmodule Planner do
     planned = khan_loop(tasks_dependencies, free_tasks, [])
     plan = group_tasks(planned, tasks_dependencies, num_workers)
 
-
-    send(caller, {:planning, {job_id, plan}})
-
+    JobManager.plan_ready(job_id, plan)
   end
 
   def find_next_independent([], _deps, _done), do: nil
