@@ -29,7 +29,8 @@ defmodule SPETask do
           nil ->
             Logger.debug("No se ha completado la tarea a tiempo.")
             {:failed, :timeout}
-          res -> {:result, res}
+          res = {:failed, _} -> res
+          result -> {:result, result}
         end
 
 

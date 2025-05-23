@@ -39,14 +39,21 @@ defmodule SPETest do
         %{
           "name" => "task7",
           "exec" => fn %{"task2" => v2, "task3" => v3, "task4" => v4} ->
-            IO.puts("value: #{inspect(v2 + v3 + v4)}")
+            raise "Exception"
           end,
           "enables" => {"task8"}
         },
         %{
           "name" => "task8",
           "exec" => fn %{"task2" => v2, "task3" => v3, "task4" => v4} ->
-            raise "Excepcion"
+            1+3
+          end,
+          "enables" => {"task9"}
+        },
+        %{
+          "name" => "task9",
+          "exec" => fn %{"task8" => v8} ->
+            v8 + 1
           end
         }
 
