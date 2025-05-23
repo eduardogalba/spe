@@ -3,19 +3,11 @@ defmodule Job do
   require Logger
 
   def init(state) do
-    # Asumo que plan es correcto y viene como una lista de listas [[]],
-    # cada uno de los niveles de tamaño máximo num_workers representa
-    # las tareas a ejecutar por instante de tiempo
     Logger.info("[Job #{inspect(self())}]: Job starting...")
     {:ok, state}
   end
 
   def start_link(state) do
-    # Asumo que me debe llegar por los args, mi id como trabajo, el plan a seguir en una lista,
-    # y la descripción del trabajo.
-
-    # Quiero solo las descripciones de tarea como un mapa y no toda la descripción teniendo
-    # las tareas como una lista
     Logger.debug("Iniciando trabajo...")
 
     new_state =
@@ -57,12 +49,6 @@ defmodule Job do
       |> Map.put(:pending_tasks, new_pending_tasks)
       |> Map.put(:results, new_results)
       |> Map.put(:free_workers, state[:free_workers] ++ [worker_pid])
-
-    # Evitar condiciones de carrera y seguir la planificacion estática,
-    # solo si han terminado las tareas en ejecuacion se continua
-    # [[]] porque supongo que la lista esta rellena de de una lista vacia
-    # cuando no se va ejecutar un proceso, podria ser cualquier cosa(nil)
-    # Ejemplo: Solo se ejecuta task4 para num_workers=2 [["task4", []]]
 
     if new_pending_tasks == [] and Map.keys(state[:tasks]) do
       Logger.info("[Job #{inspect(self())}]: Let´s continue with the plan...")
