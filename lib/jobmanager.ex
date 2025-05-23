@@ -31,8 +31,10 @@ defmodule JobManager do
 
       {:reply, {:warn, :wait_until_plan},  new_state}
     else
+      # Pensandolo bien el JobManager no creo que necesita saber mas la informacion
+      # del job, simplemente su pid si este se cae
       job = Map.put(state[:jobs][job_id], :id, job_id)
-      case SuperJob.start_job(job) do
+      case SuperManager.start_job(job, state[:num_workers]) do
         {:ok, _} -> {:reply, :ok, state}
         any -> {:reply, any, state}
       end
@@ -87,7 +89,7 @@ defmodule JobManager do
       Logger.debug("[SPE #{inspect(self())}]: After replying #{inspect(new_state)}")
       job = Map.put(new_state[:jobs][job_id], :id, job_id)
       Logger.info("Creando trabajo: #{inspect(job)}")
-      SPE.job_ready(job_id, SuperJob.start_job(job))
+      SPE.job_ready(job_id, SuperManager.start_job(job, state[:num_workers]))
 
       {:noreply, Map.put(state, :waiting, new_waiting)}
     else

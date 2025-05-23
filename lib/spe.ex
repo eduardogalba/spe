@@ -6,9 +6,9 @@ defmodule SPE do
     # TODO: opts contiene num_workers pasar a JobManager
     pubsub = Phoenix.PubSub.child_spec(name: SPE.PubSub)
 
-    superjob = %{
-      id: :superjob,
-      start: {SuperJob, :start_link, []}
+    super_manager = %{
+      id: :super_manager,
+      start: {SuperManager, :start_link, []}
     }
 
     manager_opts = Keyword.put(opts, :name, SPE.JobManager)
@@ -19,7 +19,7 @@ defmodule SPE do
 
     children = [
       pubsub,
-      superjob,
+      super_manager,
       manager
     ]
 
