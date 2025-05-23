@@ -6,20 +6,8 @@ defmodule Job do
     # Asumo que plan es correcto y viene como una lista de listas [[]],
     # cada uno de los niveles de tamaño máximo num_workers representa
     # las tareas a ejecutar por instante de tiempo
-    Phoenix.PubSub.subscribe(SPE.PubSub, "#{inspect(state[:id])}:reports")
     Logger.info("[Job #{inspect(self())}]: Job starting...")
-    case start_tasks(state) do
-      :stop ->
-        Logger.error("There are no plan for this!")
-        {:stop, {:error, :empty_task_plan}}
-      :not_matched ->
-        Logger.error("Dependencies are not correct")
-        {:stop, {:error, :wrong_plan_format}}
-      new_state ->
-        Logger.debug("Sucessfully starting..")
-        {:ok, new_state}
-    end
-
+    {:ok, state}
   end
 
   def start_link(state) do
@@ -32,56 +20,73 @@ defmodule Job do
 
     new_state =
       state
-      |> Map.put(:refs, %{})
-      |> Map.put(:done, %{}) # Esto tambien sirve para los argumentos de las tareas
-      |> Map.put(:undone, [])
+      |> Map.put(:returns, %{}) # Esto tambien sirve para los argumentos de las tareas
+      |> Map.put(:pending_tasks, [])
+      |> Map.put(:free_workers, [])
+      |> Map.put(:results, %{})
       |> Map.put(:time_start, :erlang.monotonic_time(:millisecond)) # Empieza el cronometro
 
     GenServer.start_link(__MODULE__, new_state, [])
   end
 
-  def handle_info({:task_terminated, {task_name, result}}, state) do
+  def handle_cast({:worker_ready, worker_pid}, state) do
+    Logger.info("[Job #{inspect(self())}]: Nuevo worker #{inspect(worker_pid)}...")
+    free_workers = state[:free_workers] ++ [worker_pid]
+    new_state =
+      state
+      |> Map.put(:free_workers, free_workers)
+
+    should_we_finish?(new_state)
+  end
+
+  def handle_cast({:task_terminated, {task_name, result, worker_pid}}, state) do
     case result do
       {:result, value} ->
         Logger.info("[Job #{inspect(self())}]: Handling task ending...")
-        new_undone = List.delete(state[:undone], task_name)
-        Logger.info("[Job #{inspect(self())}]: These are the tasks stil running => #{inspect(new_undone)}")
-        new_done =
-          state[:done]
+        new_pending_tasks = List.delete(state[:pending_tasks], task_name)
+        Logger.info("[Job #{inspect(self())}]: These are the tasks stil running => #{inspect(new_pending_tasks)}")
+        new_returns =
+          state[:returns]
           |> Map.put(task_name, value)
+
+        new_results =
+          state[:results]
+          |> Map.put(task_name, result)
 
         new_state =
           state
-          |> Map.put(:done, new_done)
-          |> Map.put(:undone, new_undone)
+          |> Map.put(:returns, new_returns)
+          |> Map.put(:pending_tasks, new_pending_tasks)
+          |> Map.put(:results, new_results)
+          |> Map.put(:free_workers, state[:free_workers] ++ [worker_pid])
 
         # Evitar condiciones de carrera y seguir la planificacion estática,
         # solo si han terminado las tareas en ejecuacion se continua
         # [[]] porque supongo que la lista esta rellena de de una lista vacia
         # cuando no se va ejecutar un proceso, podria ser cualquier cosa(nil)
         # Ejemplo: Solo se ejecuta task4 para num_workers=2 [["task4", []]]
-        if new_undone == [] do
+
+        if new_pending_tasks == [] and Map.keys(state[:tasks]) do
           Logger.info("[Job #{inspect(self())}]: Let´s continue with the plan...")
           should_we_finish?(new_state)
         else
           {:noreply, new_state}
         end
 
-      {:failed, reason} ->
+      {:failed, _} ->
         Logger.info("[Job #{inspect(self())}]: Handling task failing...")
-        new_undone = List.delete(state[:undone], task_name)
+        new_pending_tasks = List.delete(state[:pending_tasks], task_name)
         disable_tasks = Planner.find_dependent_tasks(state[:enables], task_name)
-        Logger.info("[Job #{inspect(self())}]: Que falta por hacer #{inspect(new_undone)}...")
+        Logger.info("[Job #{inspect(self())}]: Que falta por hacer #{inspect(new_pending_tasks)}...")
         Logger.info("[Job #{inspect(self())}]: Tareas a deshabilitar #{inspect(disable_tasks)}...")
-        result = {:failed, reason}
 
         new_state =
           if disable_tasks == [] do
-            new_done = Map.put(state[:done], task_name, result)
+            new_returns = Map.put(state[:returns], task_name, result)
 
             state
-            |> Map.put(:undone, new_undone)
-            |> Map.put(:done, new_done)
+            |> Map.put(:pending_tasks, new_pending_tasks)
+            |> Map.put(:returns, new_returns)
           else
 
             new_plan =
@@ -99,127 +104,86 @@ defmodule Job do
 
             IO.puts("Nuevo plan: #{inspect(new_plan_cleaned)}")
 
-            new_done =
-              Enum.reduce(disable_tasks, state[:done],
-                fn d_task, acc_done ->
-                  Map.put(acc_done, d_task, :not_run)
+            new_returns =
+              Enum.reduce(disable_tasks, state[:returns],
+                fn d_task, acc_returns ->
+                  Map.put(acc_returns, d_task, :not_run)
                 end)
               |> Map.put(task_name, result)
 
-            IO.puts("Tareas hechas #{inspect(new_done)}")
+            new_results =
+              Enum.reduce(disable_tasks, state[:results],
+                fn d_task, acc_results ->
+                  Map.put(acc_results, d_task, :not_run)
+                end)
+              |> Map.put(task_name, result)
+
+            IO.puts("Tareas hechas #{inspect(new_returns)}")
             # Actualiza el estado con los nuevos valores
 
             state
-            |> Map.put(:done, new_done)
-            |> Map.put(:undone, new_undone)
+            |> Map.put(:returns, new_returns)
+            |> Map.put(:pending_tasks, new_pending_tasks)
             |> Map.put(:plan, new_plan_cleaned)
+            |> Map.put(:results, new_results)
+            |> Map.put(:free_workers, state[:free_workers] ++ [worker_pid])
           end
 
         should_we_finish?(new_state)
     end
   end
 
-  def handle_info({:DOWN, monitor_ref, :process, pid, reason}, state) do
-    case Map.get(state[:refs], monitor_ref) do
-      nil ->
-        Logger.debug("[Job #{inspect(self())}]: Monitor ref : #{inspect(monitor_ref)} unknown: pid: #{inspect(pid)}")
-        {:noreply, state}
-      {_task_pid, task_name} ->
-        # Aqui se gestiona si el proceso ha cerrado anomalamente
-        # Yo optaria por analizar las dependencias, marcarlas como :not_run
-        # y quitarlas de las tareas pendientes (state[:plan])
+  def handle_info({:notify_ready, worker_pid}, state) do
+    Logger.info("[Job #{inspect(self())}]: Nuevo worker #{inspect(worker_pid)}...")
+    free_workers = state[:free_workers] ++ [worker_pid]
+    new_state =
+      state
+      |> Map.put(:free_workers, free_workers)
 
-        # Realiza el mismo comportamiento que antes con handle_info({:failed, ..})
-        # las marca como not_run y las quita del plan
-        if (reason != :normal) do
-          Logger.info("[Job #{inspect(self())}]: Handling task failing...")
-          new_undone = List.delete(state[:undone], task_name)
-          disable_tasks = Planner.find_dependent_tasks(state[:enables], task_name)
+    worker_ready(self(), worker_pid)
+    {:noreply, new_state}
+  end
 
-          Logger.info("[Job #{inspect(self())}]: Que falta por hacer #{inspect(new_undone)}...")
-          result = {:failed, {:crashed, reason}}
-          if disable_tasks == [] do
-            new_done = Map.put(state[:done], task_name, result)
-            new_state =
-              state
-              |> Map.put(:undone, new_undone)
-              |> Map.put(:done, new_done)
-            Logger.info("[Job #{inspect(self())}]: Despues de corregir: #{inspect(new_state)}")
+  def task_completed(job_id, {task_name, result, worker_pid}) do
+    GenServer.cast(job_id, {:task_terminated, {task_name, result, worker_pid}})
+  end
 
-            {:noreply, new_state}
-          else
-            new_plan =
-              Enum.reduce(
-                disable_tasks,
-                fn d_task ->
-                  Enum.map(
-                    state[:plan],
-                    fn next_tasks ->
-                      List.delete(next_tasks, d_task)
-                    end
-                  )
+  def worker_ready(job_pid, worker_pid) do
+    GenServer.cast(job_pid, {:worker_ready, worker_pid})
+  end
+
+  defp should_we_finish?(state) do
+    case dispatch_tasks(state) do
+      :wait ->
+        if (length(Map.keys(state[:tasks])) == length(Map.keys(state[:returns]))) do
+          Logger.info("[Job #{inspect(self())}]: Finished all tasks...")
+          Logger.info("[Job #{inspect(self())}]: Resultados #{inspect(state[:results])}")
+          failed =
+            state[:results]
+            |> Map.values()
+            |> Enum.any?(fn result ->
+                case result do
+                  {:failed, _reason} -> true
+                  _ -> false
                 end
-              )
+              end)
 
-            IO.puts("Nuevo plan: #{inspect(new_plan)}")
+          status = if failed, do: :failed, else: :suceeded
 
-            new_done =
-              Enum.reduce(
-                disable_tasks,
-                fn d_task ->
-                  Map.put(state[:done], d_task, :not_run)
-                end
-              )
-              |> Map.put(task_name, result)
+          Phoenix.PubSub.local_broadcast(
+            SPE.PubSub,
+            "#{inspect(state[:id])}",
+            {
+              :spe,
+              :erlang.monotonic_time(:millisecond) - state[:time_start],
+              {state[:id],:result, {status, state[:results]}}
+            }
+          )
 
-            IO.puts("Tareas hechas #{inspect(new_done)}")
-            # Actualiza el estado con los nuevos valores
-            new_state =
-              state
-              |> Map.put(:done, new_done)
-              |> Map.put(:undone, new_undone)
-              |> Map.put(:plan, new_plan)
-
-            {:noreply, new_state}
-          end
+          {:stop, :normal, state}
         else
           {:noreply, state}
         end
-    end
-  end
-
-  # Ignoro cualquier otro mensaje
-  def handle_info(_, state) do
-    {:noreply, state}
-  end
-
-  defp should_we_finish? (state) do
-    case start_tasks(state) do
-      :stop ->
-        Logger.info("[Job #{inspect(self())}]: Finished all tasks...")
-        failed =
-          Enum.any?(state[:done], fn result ->
-            case result do
-              {:failed, _reason} -> true
-              _ -> false
-            end
-          end)
-
-        status = if failed, do: :failed, else: :suceeded
-
-        Phoenix.PubSub.local_broadcast(
-          SPE.PubSub,
-          "#{inspect(state[:id])}",
-          {
-            :spe,
-            :erlang.monotonic_time(:millisecond) - state[:time_start],
-            {state[:id],:result, {status, state[:done]}}}
-        )
-
-        {:stop, :normal, state}
-
-      :not_matched ->
-        {:stop, {:error, :wrong_plan_format}}
 
       new_state ->
         Logger.info("[Job #{inspect(self())}]: Next state...")
@@ -227,40 +191,52 @@ defmodule Job do
     end
   end
 
-  defp start_tasks(state) do
+  defp dispatch_tasks(state) do
     case state[:plan] do
       [] ->
         Logger.info("[Job #{inspect(self())}]: No more tasks left to run...")
-        :stop
+        :wait
 
       [first_tasks | next_tasks] ->
-        Logger.info("[Job #{inspect(self())}]: Starting tasks #{inspect(first_tasks)}")
-        job_id = state[:id]
 
-        refs =
-          Enum.reduce(
-            first_tasks,
-            %{},
-            fn task, acc ->
-              case task do
-                task_name ->
-                  {task_pid, ref} = spawn_monitor(SPETask, :apply, [job_id, task_name, state[:tasks]["timeout"], state[:tasks][task_name]["exec"], [state[:done]]])
-                  Map.put(acc, ref, {task_pid, task_name})
-                end
-            end
+        Logger.info("[Job #{inspect(self())}]: Esto queda en el plan #{inspect(state[:plan])}")
+        free_workers = state[:free_workers]
+        {to_assign, remaining_tasks} = Enum.split(first_tasks, length(free_workers))
+
+
+        # Empareja tareas y workers
+        Enum.zip(to_assign, free_workers)
+        |> Enum.each(fn {task_name, worker_pid} ->
+          Worker.send_task(
+            worker_pid,
+            task_name,
+            state[:tasks][task_name]["timeout"],
+            state[:tasks][task_name]["exec"],
+            state[:returns]
           )
+        end)
+        Logger.info("[Job #{inspect(self())}]: Starting tasks #{inspect(to_assign)}")
 
-        new_refs = Map.merge(state[:refs], refs)
+
+        # Los workers que quedan libres después de asignar
+        new_free_workers = Enum.drop(free_workers, length(to_assign))
+
+        # Construye el nuevo plan: si quedan tareas sin asignar, las dejas al principio
+        new_plan =
+          if remaining_tasks == [] do
+            next_tasks
+          else
+            [remaining_tasks | next_tasks]
+          end
+
+        Logger.info(Logger.info("[Job #{inspect(self())}]: Tareas restantes #{inspect(remaining_tasks)}"))
+        Logger.info(Logger.info("[Job #{inspect(self())}]: Nuevo plan #{inspect(new_plan)}"))
 
         state
-          |> Map.put(:plan, next_tasks)
-          |> Map.put(:undone, first_tasks)
-          |> Map.put(:refs, new_refs)
+          |> Map.put(:plan, new_plan)
+          |> Map.put(:pending_tasks, state[:pending_tasks] ++ to_assign)
+          |> Map.put(:free_workers, new_free_workers)
 
-      _ ->
-        Logger.info("[Job #{inspect(self())}]: Something is strange in tasks plan")
-        Logger.info("Esto es lo que me llega: #{inspect(state[:plan])}")
-        :not_matched
       end
   end
 
