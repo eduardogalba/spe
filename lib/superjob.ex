@@ -1,5 +1,6 @@
 defmodule SuperJob do
   use Supervisor
+  require Logger
 
    @impl Supervisor
   def init(children) do
@@ -8,11 +9,14 @@ defmodule SuperJob do
       max_restarts: 1,
       max_seconds: 5
     ]
-
+    Logger.debug("[SuperJob #{inspect(self())}]: Definiendo estrategia...")
     Supervisor.init(children, opts)
   end
 
   def start_link(job_state, num_workers) do
+    Logger.debug("[SuperJob #{inspect(self())}]: Iniciando...")
+    {:ok, sup_pid} = Supervisor.start_link(__MODULE__, [])
+
     job =
       %{
         id: job_state[:id],
@@ -20,19 +24,25 @@ defmodule SuperJob do
         restart: :transient
       }
 
-    super_task =
+    Logger.debug("[SuperJob #{inspect(self())}]: Iniciando Job...")
+
+    {:ok, job_pid} = Supervisor.start_child(sup_pid, job)
+
+    Logger.debug("[SuperJob #{inspect(self())}]: REsultado: #{inspect(job_pid)}")
+
+    super_worker =
       %{
-        id: "st_" <> inspect(job_state[:id]),
-        start: {SuperTask, :start_link, [[num_workers: num_workers]]},
+        id: "sw_" <> inspect(job_state[:id]),
+        start: {SuperWorker, :start_link, [job_pid, num_workers]},
         restart: :transient
       }
 
-    children = [
-      job,
-      super_task
-    ]
+    Logger.debug("[SuperJob #{inspect(self())}]: Iniciando SuperWorker...")
+    result = Supervisor.start_child(sup_pid, super_worker)
 
-    Supervisor.start_link(__MODULE__, [children], name: SPE.SuperJob)
+    Logger.debug("[SuperJob #{inspect(self())}]: Resultado: #{inspect(result)}...")
+
+    {:ok, sup_pid}
   end
 
 end

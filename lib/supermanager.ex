@@ -1,5 +1,6 @@
 defmodule SuperManager do
   use Supervisor
+  require Logger
 
   @impl Supervisor
   def init(_init_arg) do
@@ -25,6 +26,7 @@ defmodule SuperManager do
         restart: :transient
       }
 
-    Supervisor.start_child(SPE.SuperJob, superjob)
+    Logger.debug("[SuperManager #{inspect(self())}]: Iniciando SuperJob...")
+    Supervisor.start_child(SPE.SuperManager, superjob)
   end
 end
