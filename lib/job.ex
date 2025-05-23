@@ -39,98 +39,96 @@ defmodule Job do
     should_we_finish?(new_state)
   end
 
-  def handle_cast({:task_terminated, {task_name, result, worker_pid}}, state) do
-    case result do
-      {:result, value} ->
-        Logger.info("[Job #{inspect(self())}]: Handling task ending...")
-        new_pending_tasks = List.delete(state[:pending_tasks], task_name)
-        Logger.info("[Job #{inspect(self())}]: These are the tasks stil running => #{inspect(new_pending_tasks)}")
+  def handle_cast({:task_terminated, {task_name, {:result, value}, worker_pid}}, state) do
+    Logger.info("[Job #{inspect(self())}]: Handling task ending...")
+    new_pending_tasks = List.delete(state[:pending_tasks], task_name)
+    Logger.info("[Job #{inspect(self())}]: These are the tasks stil running => #{inspect(new_pending_tasks)}")
+    new_returns =
+      state[:returns]
+      |> Map.put(task_name, value)
+
+    new_results =
+      state[:results]
+      |> Map.put(task_name, {:result, value})
+
+    new_state =
+      state
+      |> Map.put(:returns, new_returns)
+      |> Map.put(:pending_tasks, new_pending_tasks)
+      |> Map.put(:results, new_results)
+      |> Map.put(:free_workers, state[:free_workers] ++ [worker_pid])
+
+    # Evitar condiciones de carrera y seguir la planificacion estática,
+    # solo si han terminado las tareas en ejecuacion se continua
+    # [[]] porque supongo que la lista esta rellena de de una lista vacia
+    # cuando no se va ejecutar un proceso, podria ser cualquier cosa(nil)
+    # Ejemplo: Solo se ejecuta task4 para num_workers=2 [["task4", []]]
+
+    if new_pending_tasks == [] and Map.keys(state[:tasks]) do
+      Logger.info("[Job #{inspect(self())}]: Let´s continue with the plan...")
+      should_we_finish?(new_state)
+    else
+      {:noreply, new_state}
+    end
+  end
+
+  def handle_cast({:task_terminated, {task_name, {:failed, reason}, worker_pid}}, state) do
+    Logger.info("[Job #{inspect(self())}]: Handling task failing...")
+    new_pending_tasks = List.delete(state[:pending_tasks], task_name)
+    disable_tasks = Planner.find_dependent_tasks(state[:enables], task_name)
+    Logger.info("[Job #{inspect(self())}]: Que falta por hacer #{inspect(new_pending_tasks)}...")
+    Logger.info("[Job #{inspect(self())}]: Tareas a deshabilitar #{inspect(disable_tasks)}...")
+
+    new_state =
+      if disable_tasks == [] do
+        new_returns = Map.put(state[:returns], task_name, {:failed, reason})
+
+        state
+        |> Map.put(:pending_tasks, new_pending_tasks)
+        |> Map.put(:returns, new_returns)
+      else
+
+        new_plan =
+          Enum.reduce(disable_tasks, state[:plan],
+            fn d_task, acc_plan ->
+              Enum.map(acc_plan,
+                fn next_tasks ->
+                  List.delete(next_tasks, d_task)
+                end
+          ) end)
+
+        new_plan_cleaned =
+          new_plan
+          |> Enum.filter(fn sublist -> !Enum.empty?(sublist) end)
+
+        IO.puts("Nuevo plan: #{inspect(new_plan_cleaned)}")
+
         new_returns =
-          state[:returns]
-          |> Map.put(task_name, value)
+          Enum.reduce(disable_tasks, state[:returns],
+            fn d_task, acc_returns ->
+              Map.put(acc_returns, d_task, :not_run)
+            end)
+          |> Map.put(task_name, {:failed, reason})
 
         new_results =
-          state[:results]
-          |> Map.put(task_name, result)
+          Enum.reduce(disable_tasks, state[:results],
+            fn d_task, acc_results ->
+              Map.put(acc_results, d_task, :not_run)
+            end)
+          |> Map.put(task_name, {:failed, reason})
 
-        new_state =
-          state
-          |> Map.put(:returns, new_returns)
-          |> Map.put(:pending_tasks, new_pending_tasks)
-          |> Map.put(:results, new_results)
-          |> Map.put(:free_workers, state[:free_workers] ++ [worker_pid])
+        IO.puts("Tareas hechas #{inspect(new_returns)}")
+        # Actualiza el estado con los nuevos valores
 
-        # Evitar condiciones de carrera y seguir la planificacion estática,
-        # solo si han terminado las tareas en ejecuacion se continua
-        # [[]] porque supongo que la lista esta rellena de de una lista vacia
-        # cuando no se va ejecutar un proceso, podria ser cualquier cosa(nil)
-        # Ejemplo: Solo se ejecuta task4 para num_workers=2 [["task4", []]]
+        state
+        |> Map.put(:returns, new_returns)
+        |> Map.put(:pending_tasks, new_pending_tasks)
+        |> Map.put(:plan, new_plan_cleaned)
+        |> Map.put(:results, new_results)
+        |> Map.put(:free_workers, state[:free_workers] ++ [worker_pid])
+      end
 
-        if new_pending_tasks == [] and Map.keys(state[:tasks]) do
-          Logger.info("[Job #{inspect(self())}]: Let´s continue with the plan...")
-          should_we_finish?(new_state)
-        else
-          {:noreply, new_state}
-        end
-
-      {:failed, _} ->
-        Logger.info("[Job #{inspect(self())}]: Handling task failing...")
-        new_pending_tasks = List.delete(state[:pending_tasks], task_name)
-        disable_tasks = Planner.find_dependent_tasks(state[:enables], task_name)
-        Logger.info("[Job #{inspect(self())}]: Que falta por hacer #{inspect(new_pending_tasks)}...")
-        Logger.info("[Job #{inspect(self())}]: Tareas a deshabilitar #{inspect(disable_tasks)}...")
-
-        new_state =
-          if disable_tasks == [] do
-            new_returns = Map.put(state[:returns], task_name, result)
-
-            state
-            |> Map.put(:pending_tasks, new_pending_tasks)
-            |> Map.put(:returns, new_returns)
-          else
-
-            new_plan =
-              Enum.reduce(disable_tasks, state[:plan],
-                fn d_task, acc_plan ->
-                  Enum.map(acc_plan,
-                    fn next_tasks ->
-                      List.delete(next_tasks, d_task)
-                    end
-              ) end)
-
-            new_plan_cleaned =
-              new_plan
-              |> Enum.filter(fn sublist -> !Enum.empty?(sublist) end)
-
-            IO.puts("Nuevo plan: #{inspect(new_plan_cleaned)}")
-
-            new_returns =
-              Enum.reduce(disable_tasks, state[:returns],
-                fn d_task, acc_returns ->
-                  Map.put(acc_returns, d_task, :not_run)
-                end)
-              |> Map.put(task_name, result)
-
-            new_results =
-              Enum.reduce(disable_tasks, state[:results],
-                fn d_task, acc_results ->
-                  Map.put(acc_results, d_task, :not_run)
-                end)
-              |> Map.put(task_name, result)
-
-            IO.puts("Tareas hechas #{inspect(new_returns)}")
-            # Actualiza el estado con los nuevos valores
-
-            state
-            |> Map.put(:returns, new_returns)
-            |> Map.put(:pending_tasks, new_pending_tasks)
-            |> Map.put(:plan, new_plan_cleaned)
-            |> Map.put(:results, new_results)
-            |> Map.put(:free_workers, state[:free_workers] ++ [worker_pid])
-          end
-
-        should_we_finish?(new_state)
-    end
+    should_we_finish?(new_state)
   end
 
   def handle_info({:notify_ready, worker_pid}, state) do
