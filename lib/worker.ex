@@ -1,26 +1,76 @@
 defmodule Worker do
   use GenServer
+  require Logger
 
-  def init(_init_arg) do
-    JobManager.worker_ready()
+  def init(state) do
+    Logger.debug(("[Worker #{inspect(self())}]: init: Me llega en state #{inspect(state)}"))
+    send(state[:job], {:notify_ready, self()})
+    Logger.debug(("[Worker #{inspect(self())}]: Entrando a init"))
+    {:ok, state}
   end
 
-  def start_link(opts) do
-    GenServer.start_link(__MODULE__,
-      name: Keyword.get(opts, :name, :default),
-      name: Keyword.get(opts, :name, :default)
+  def start_link(state) do
+    Logger.debug("[Worker #{inspect(self())}]: Iniciando...")
+    Logger.debug("[Worker #{inspect(self())}]: Esto tengo en mi estado #{inspect(state)}")
+    GenServer.start_link(__MODULE__, state)
+  end
+
+  def send_task(worker_pid, name, timeout, fun, params) do
+    GenServer.cast(worker_pid, {:task, name, timeout, fun, params})
+  end
+
+  def handle_cast({:task, name, timeout, fun, params}, state) do
+    result = apply(state[:job], name, timeout, fun, params)
+    Job.task_completed(state[:job], {name, result, self()})
+    {:noreply, state}
+  end
+
+  def apply(job_id, task_name, timeout, function, args) do
+    tick = :erlang.monotonic_time(:millisecond)
+    effective_timeout = if !timeout, do: :infinity, else: timeout
+    Logger.debug("[Worker #{inspect(self())}]: Task #{inspect(task_name)} Arguments #{inspect(args)}")
+
+    task_fun = fn ->
+      try do
+        Kernel.apply(function, [args])
+      rescue
+        exception ->
+          Logger.debug("[#{inspect(task_name)}]: Capturada excepción en el hijo: #{inspect(exception)}")
+          Logger.error("#{inspect(__STACKTRACE__)}")
+          {:failed, {:crashed, Exception.message(exception)}}
+      catch
+        kind, reason ->
+          Logger.debug("[#{inspect(task_name)}]: Capturado catch en el hijo: #{inspect(kind)}, #{inspect(reason)}")
+          {:failed, {:crashed, reason}}
+      end
+    end
+
+    task = Task.async(task_fun)
+
+    Logger.debug("[Worker #{inspect(self())}]: Primera linea de defensa atravesada")
+
+    result =
+        case Task.await(task, effective_timeout) do
+          nil ->
+            Logger.debug("No se ha completado la tarea a tiempo.")
+            {:failed, :timeout}
+          res = {:failed, _} -> res
+          result -> {:result, result}
+        end
+
+
+    tac = :erlang.monotonic_time(:millisecond)
+
+    Logger.debug("[Worker #{inspect(self())}]: Sending to PubSub message queue #{inspect(result)}")
+
+    # Comunicación a todos de las tareas terminadas
+    Phoenix.PubSub.local_broadcast(
+      SPE.PubSub,
+      "#{inspect(job_id)}",
+      {:spe, tac - tick, {job_id, :task_terminated, task_name}}
     )
 
-    {:ok, Keyword.get(opts, :name, :default)}
+    result
   end
 
-  def send_task(worker_pid, name: name, fn: fun, params: params) do
-    GenServer.cast(worker_pid, {:task, name, fun, params})
-  end
-
-  def handle_cast({:task, name, fun, params}, _, worker_name) do
-    result = apply(fun, params)
-    JobManager.task_completed(name, result, worker_name)
-    {:noreply, worker_name}
-  end
 end
