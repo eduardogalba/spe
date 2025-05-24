@@ -10,8 +10,8 @@ defmodule Worker do
   end
 
   def start_link(state) do
-    Logger.debug("[Worker #{inspect(self())}]: Iniciando...")
-    Logger.debug("[Worker #{inspect(self())}]: Esto tengo en mi estado #{inspect(state)}")
+    Logger.debug("[SuperWorker #{inspect(self())}]: Iniciando Worker...")
+    Logger.debug("[SuperWorker #{inspect(self())}]: Esto tengo en mi estado #{inspect(state)}")
     GenServer.start_link(__MODULE__, state)
   end
 

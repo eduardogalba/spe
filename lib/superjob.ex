@@ -38,11 +38,13 @@ defmodule SuperJob do
       }
 
     Logger.debug("[SuperJob #{inspect(self())}]: Iniciando SuperWorker...")
+
     result = Supervisor.start_child(sup_pid, super_worker)
-
     Logger.debug("[SuperJob #{inspect(self())}]: Resultado: #{inspect(result)}...")
-
-    {:ok, sup_pid}
+    case result do
+      {:ok, _} -> {:ok, sup_pid}
+      {:error, _} -> result
+    end
   end
 
 end

@@ -6,11 +6,11 @@ defmodule SuperWorker do
   def init(info) do
     opts = [
       strategy: :one_for_one,
-      max_restarts: 1,
+      max_restarts: 2,
       max_seconds: 5
     ]
 
-    Logger.debug("[SuperWorker #{inspect(self())}]: Iniciando workers...")
+    Logger.debug("[SuperWorker #{inspect(self())}]: Iniciando SuperWorker...")
     Logger.debug("[SuperWorker #{inspect(self())}]: init: Me llega en info: #{inspect(info)}.")
     num_workers = if (info[:num_workers] == :unbound), do: 1, else: info[:num_workers]
 

@@ -43,8 +43,7 @@ defmodule JobManager do
 
 
   def handle_cast({:planning, {job_id, job_plan}}, state) do
-    Logger.debug("[SPE #{inspect(self())}]: Receiving plan for #{inspect(job_id)}...")
-    Logger.debug("[SPE #{inspect(self())}]: Tengo en state #{inspect(state)}")
+    Logger.debug("[JobManager #{inspect(self())}]: Receiving plan for #{inspect(job_id)}...")
 
     tasks =
       Enum.reduce(
@@ -53,7 +52,6 @@ defmodule JobManager do
         fn task_desc, acc ->
           Map.put(acc, task_desc["name"], task_desc)
         end)
-      Logger.debug("[SPE #{inspect(self())}]: Tengo en tasks #{inspect(tasks)}")
 
     enables =
       Enum.reduce(tasks,
@@ -66,7 +64,7 @@ defmodule JobManager do
           end
       end)
 
-    Logger.debug("[SPE #{inspect(self())}]: Tengo en enables #{inspect(enables)}")
+    Logger.debug("[JobManager #{inspect(self())}]: Tengo en enables #{inspect(enables)}")
 
     new_job =
       Map.put(state[:jobs][job_id], :plan, job_plan)
@@ -76,19 +74,18 @@ defmodule JobManager do
 
     new_state = update_in(state[:jobs], fn jobs ->Map.put(jobs, job_id, new_job) end)
 
-    Logger.debug("[SPE #{inspect(self())}]: Tengo nuevo state #{inspect(new_state)}")
 
     # De momento, no se manejan posibles errores
     # Un posible error es querer iniciar un trabajo no registrado
 
     if Enum.member?(new_state[:waiting], job_id) do
-      Logger.debug("[SPE #{inspect(self())}]: Replying client waiting...")
+      Logger.debug("[JobManager #{inspect(self())}]: Replying client waiting...")
 
       new_waiting = List.delete(state[:waiting], job_id)
 
-      Logger.debug("[SPE #{inspect(self())}]: After replying #{inspect(new_state)}")
+
       job = Map.put(new_state[:jobs][job_id], :id, job_id)
-      Logger.info("Creando trabajo: #{inspect(job)}")
+
       SPE.job_ready(job_id, SuperManager.start_job(job, state[:num_workers]))
 
       {:noreply, Map.put(state, :waiting, new_waiting)}

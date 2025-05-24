@@ -22,8 +22,12 @@ defmodule SPETest do
         },
         %{
           "name" => "task4",
-          "exec" => fn %{"task2" => v2} -> v2 * 3 end,
-          "enables" => {"task5"}
+          "exec" => fn %{"task2" => v2} ->
+            :timer.sleep(1000)
+            v2 * 3
+          end,
+          "enables" => {"task5"},
+          "timeout" => 800
         },
         %{
           "name" => "task5",
@@ -39,7 +43,7 @@ defmodule SPETest do
         %{
           "name" => "task7",
           "exec" => fn %{"task2" => v2, "task3" => v3, "task4" => v4} ->
-            raise "Exception"
+            :timer.sleep(20000)
           end,
           "enables" => {"task8"}
         },
