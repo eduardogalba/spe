@@ -50,12 +50,12 @@ defmodule Worker do
     Logger.debug("[Worker #{inspect(self())}]: Primera linea de defensa atravesada")
 
     result =
-        case Task.await(task, effective_timeout) do
-          nil ->
-            Logger.debug("No se ha completado la tarea a tiempo.")
+        try do
+          {:result, Task.await(task, effective_timeout)}
+        catch
+          :exit, {:timeout, _} ->
+            Logger.debug("Task.await ha hecho timeout.")
             {:failed, :timeout}
-          res = {:failed, _} -> res
-          result -> {:result, result}
         end
 
 
