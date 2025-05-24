@@ -89,7 +89,7 @@ defmodule Validator do
            )) or
            !Map.has_key?(task, "timeout"),
            _ <- Logger.debug("[Validator #{inspect(self())}]: Has it enables? Is it a list?"),
-         true <- (Map.has_key?(task, "enables") and is_tuple(task["enables"])) do
+         true <- (Map.has_key?(task, "enables") and is_tuple(task["enables"])) or !(Map.has_key?(task, "enables")) do
       Logger.info("Task validation passed for: #{inspect(task["name"])}")
       true
     else
