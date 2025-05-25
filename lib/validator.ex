@@ -10,7 +10,7 @@ defmodule Validator do
       _ <- Logger.debug("[Validator #{inspect(self())}]: Is the name a non-empty String?"),
       true <- is_bitstring(job["name"]) and String.length(job["name"]) > 0,
       _ <- Logger.debug("[Validator #{inspect(self())}]: Is the tasks field a list?"),
-      true <- is_list(job["tasks"]),
+      true <- is_list(job["tasks"]) and !Enum.empty?(job["tasks"]),
       _ <- Logger.debug("[Validator #{inspect(self())}]: Validating tasks..."),
       nil <- Enum.find(job["tasks"], &(!valid_task(&1))),
       _ <- Logger.debug("[Validator #{inspect(self())}]: Are the tasks names unique?"),

@@ -28,7 +28,7 @@ defmodule SPE do
     case Supervisor.start_link(children, strategy: :one_for_one) do
       {:ok, supv} ->
         ref = Process.monitor(supv)
-        {:ok, Map.put(state, :supv, ref)}
+        {:ok, Map.put(state, :supv, %{ref: ref, pid: supv})}
 
       {:error, {:already_started, _}} = error ->
         Logger.error("[SPE #{inspect(self())}]: Server is already started.")
@@ -112,6 +112,9 @@ defmodule SPE do
     GenServer.cast(SPE, {:ready_to_start, {job_id, response}})
   end
 
-
+  def terminate(_reason, state) do
+    Supervisor.stop(state[:supv][:pid])
+    :ok
+  end
 
  end

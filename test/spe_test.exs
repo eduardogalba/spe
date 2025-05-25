@@ -3,6 +3,29 @@ defmodule SPETest do
 
   use ExUnit.Case, async: false
 
+  setup do
+    # Para el supervisor principal si está vivo
+    if Process.whereis(SPE) do
+      Supervisor.stop(SPE)
+    end
+
+    # Para el PubSub si está vivo
+    if Process.whereis(SPE.PubSub) do
+      Supervisor.stop(SPE.PubSub)
+    end
+
+    on_exit(fn ->
+      if Process.whereis(SPE) do
+        Supervisor.stop(SPE)
+      end
+      if Process.whereis(SPE.PubSub) do
+        Supervisor.stop(SPE.PubSub)
+      end
+    end)
+
+    :ok
+  end
+
   test "submit_bad_jobs" do
     assert {:ok, sup} = SPE.start_link([])
     assert {:error, _} = SPE.submit_job("bad")
