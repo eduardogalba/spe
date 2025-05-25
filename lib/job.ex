@@ -17,6 +17,7 @@ defmodule Job do
       |> Map.put(:free_workers, [])
       |> Map.put(:results, %{})
       |> Map.put(:time_start, :erlang.monotonic_time(:millisecond)) # Empieza el cronometro
+      |> Map.put(:busy_workers, %{})
 
     GenServer.start_link(__MODULE__, new_state, [])
   end
@@ -24,6 +25,8 @@ defmodule Job do
   def handle_cast({:worker_ready, worker_pid}, state) do
     Logger.info("[Job #{inspect(self())}]: Nuevo worker #{inspect(worker_pid)}...")
     free_workers = state[:free_workers] ++ [worker_pid]
+    # Si se cae, me llegara una notificacion
+    Process.monitor(worker_pid)
     new_state =
       state
       |> Map.put(:free_workers, free_workers)
@@ -50,6 +53,7 @@ defmodule Job do
       |> Map.put(:pending_tasks, new_pending_tasks)
       |> Map.put(:results, new_results)
       |> Map.put(:free_workers, state[:free_workers] ++ [worker_pid])
+      |> Map.put(:busy_workers, Map.delete(state[:busy_workers], worker_pid))
 
     if new_pending_tasks == [] and Map.keys(state[:tasks]) do
       Logger.info("[Job #{inspect(self())}]: Next plan floor = > #{inspect(state[:plan])}")
@@ -73,6 +77,8 @@ defmodule Job do
         state
         |> Map.put(:pending_tasks, new_pending_tasks)
         |> Map.put(:returns, new_returns)
+        |> Map.put(:busy_workers, Map.delete(state[:busy_workers], worker_pid))
+
       else
 
         new_plan =
@@ -113,6 +119,8 @@ defmodule Job do
         |> Map.put(:plan, new_plan_cleaned)
         |> Map.put(:results, new_results)
         |> Map.put(:free_workers, state[:free_workers] ++ [worker_pid])
+        |> Map.put(:busy_workers, Map.delete(state[:busy_workers], worker_pid))
+
       end
 
     should_we_finish?(new_state)
@@ -127,6 +135,16 @@ defmodule Job do
 
     worker_ready(self(), worker_pid)
     {:noreply, new_state}
+  end
+
+  def handle_info({:DOWN, _ref, :process, pid, reason}, state) do
+
+    if reason != :normal do
+      task_name = Map.get(state[:busy_workers], pid)
+      task_completed(self(), {task_name, {:failed, reason}, pid})
+    end
+
+    {:noreply, state}
   end
 
   def task_completed(job_id, {task_name, result, worker_pid}) do
@@ -189,6 +207,11 @@ defmodule Job do
         free_workers = state[:free_workers]
         {to_assign, remaining_tasks} = Enum.split(first_tasks, length(free_workers))
 
+        busy_workers =
+          Enum.zip(to_assign, free_workers)
+          |> Enum.reduce(%{}, fn {task_name, worker_pid}, acc ->
+            Map.put(acc, worker_pid, task_name)
+          end)
 
         # Empareja tareas y workers
         Enum.zip(to_assign, free_workers)
@@ -223,6 +246,7 @@ defmodule Job do
           |> Map.put(:plan, new_plan)
           |> Map.put(:pending_tasks, state[:pending_tasks] ++ to_assign)
           |> Map.put(:free_workers, new_free_workers)
+          |> Map.put(:busy_workers, busy_workers)
 
       end
   end

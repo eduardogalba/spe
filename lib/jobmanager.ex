@@ -36,7 +36,7 @@ defmodule JobManager do
       job = Map.put(state[:jobs][job_id], :id, job_id)
       # OJO! Aqui se podria comprobar la longitud maxima de las sublistas
       # y si num_workers es unbound se establece esa longitud como num_workers
-      case SuperManager.start_job(job, state[:num_workers]) do
+      case SuperManager.start_job(job, job[:num_workers]) do
         {:ok, _} -> {:reply, {:ok, job_id}, state}
         any -> {:reply, any, state}
       end
@@ -66,6 +66,15 @@ defmodule JobManager do
           end
       end)
 
+    # Si no hay num_workers definido optamos por el nivel
+    # de concurrencia que pueda necesitar mas workers
+    num_workers =
+      if state[:num_workers] == :unbound do
+        job_plan |> Enum.map(&length/1) |> Enum.max()
+      else
+        state[:num_workers]
+      end
+
     Logger.debug("[JobManager #{inspect(self())}]: Tengo en enables #{inspect(enables)}")
 
     new_job =
@@ -73,6 +82,7 @@ defmodule JobManager do
       |> Map.put(:enables, enables)
       |> Map.delete(:desc) # La descripcion entera es innecesaria
       |> Map.put(:tasks, tasks)
+      |> Map.put(:num_workers, num_workers)
 
     new_state = update_in(state[:jobs], fn jobs ->Map.put(jobs, job_id, new_job) end)
 
@@ -90,7 +100,7 @@ defmodule JobManager do
 
       # OJO! Aqui se podria comprobar la longitud maxima de las sublistas
       # y si num_workers es unbound se establece esa longitud como num_workers
-      SPE.job_ready(job_id, SuperManager.start_job(job, state[:num_workers]))
+      SPE.job_ready(job_id, SuperManager.start_job(job, job[:num_workers]))
 
       {:noreply, Map.put(state, :waiting, new_waiting)}
     else
