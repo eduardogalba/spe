@@ -74,8 +74,11 @@ defmodule SPE do
             Map.delete(clients, job_id)
           end
         )
+    case response do
+      {:ok, _} -> GenServer.reply(state[:waiting][job_id], {:ok, job_id})
+      {:error, _} = error -> GenServer.reply(state[:waiting][job_id], error)
+    end
 
-    GenServer.reply(state[:waiting][job_id], response)
     {:noreply, new_state}
   end
 

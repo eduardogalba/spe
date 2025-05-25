@@ -1,5 +1,5 @@
 defmodule Planner do
-  require IEx
+  require Logger
 
   def planning(job_id, job_desc, num_workers) do
     tasks = job_desc["tasks"]
@@ -7,7 +7,7 @@ defmodule Planner do
 
 
     enabled_names =
-      List.foldr(tasks, [], fn task, acc -> [Map.get(task, "enables", {}) | acc] end)
+      List.foldr(tasks, [], fn task, acc -> [Map.get(task, "enables", []) | acc] end)
       |> Enum.uniq()
       |> List.foldr([], fn enables, acc ->
         if (enable = List.first(enables)), do: [enable|acc], else: acc
@@ -25,7 +25,7 @@ defmodule Planner do
 
         dependent_tasks =
           tasks
-          |> Enum.filter(fn t -> task_name in Map.get(t, "enables", {}) end)
+          |> Enum.filter(fn t -> task_name in Map.get(t, "enables", []) end)
           |> Enum.map(& &1["name"])
 
         if (dependent_tasks == []), do: acc, else: Map.put(acc, task_name, dependent_tasks)
@@ -36,7 +36,7 @@ defmodule Planner do
     eff_num_workers = if num_workers == :unbound, do: length(planned), else: num_workers
     # OJO! Hallar la maxima longitud de las sublistas
     plan = group_tasks(planned, tasks_dependencies, eff_num_workers)
-
+    Logger.info("[Planner #{inspect(self())}]: Sending plan.. #{inspect(plan)}")
     JobManager.plan_ready(job_id, plan)
   end
 
@@ -110,7 +110,6 @@ defmodule Planner do
         planned
       end
     else
-      IO.puts("Free Tasks: #{inspect(free_tasks)} Deps: #{inspect(dependencies)} Planned: #{inspect(planned)}")
       [n | _] = free_tasks
       edges =
         Enum.reduce(dependencies, %{}, fn {task_name, deps}, acc ->

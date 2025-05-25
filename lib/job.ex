@@ -35,6 +35,7 @@ defmodule Job do
     Logger.info("[Job #{inspect(self())}]: Handling task ending...")
     new_pending_tasks = List.delete(state[:pending_tasks], task_name)
     Logger.info("[Job #{inspect(self())}]: These are the tasks stil running => #{inspect(new_pending_tasks)}")
+    Logger.info("[Job #{inspect(self())}]: Task Name: #{inspect(task_name)} Result: #{inspect(value)}")
     new_returns =
       state[:returns]
       |> Map.put(task_name, value)
@@ -51,7 +52,7 @@ defmodule Job do
       |> Map.put(:free_workers, state[:free_workers] ++ [worker_pid])
 
     if new_pending_tasks == [] and Map.keys(state[:tasks]) do
-      Logger.info("[Job #{inspect(self())}]: Let´s continue with the plan...")
+      Logger.info("[Job #{inspect(self())}]: Next plan floor = > #{inspect(state[:plan])}")
       should_we_finish?(new_state)
     else
       {:noreply, new_state}
@@ -152,15 +153,16 @@ defmodule Job do
                 end
               end)
 
-          status = if failed, do: :failed, else: :suceeded
+          status = if failed, do: :failed, else: :succeeded
+          Logger.info("[Job #{inspect(self())}]: Sending to PubSub message queue #{inspect(state[:id])}")
 
           Phoenix.PubSub.local_broadcast(
             SPE.PubSub,
-            "#{inspect(state[:id])}",
+            state[:id],
             {
               :spe,
               :erlang.monotonic_time(:millisecond) - state[:time_start],
-              {state[:id],:result, {status, state[:results]}}
+              {state[:id], :result, {status, state[:results]}}
             }
           )
 
@@ -193,6 +195,7 @@ defmodule Job do
         |> Enum.each(fn {task_name, worker_pid} ->
           Worker.send_task(
             worker_pid,
+            state[:id],
             task_name,
             state[:tasks][task_name]["timeout"],
             state[:tasks][task_name]["exec"],

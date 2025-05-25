@@ -15,24 +15,29 @@ defmodule Worker do
     GenServer.start_link(__MODULE__, state)
   end
 
-  def send_task(worker_pid, name, timeout, fun, params) do
-    GenServer.cast(worker_pid, {:task, name, timeout, fun, params})
+  def send_task(worker_pid, job_id, name, timeout, fun, params) do
+    GenServer.cast(worker_pid, {:task, {job_id, {name, timeout, fun, params}}})
   end
 
-  def handle_cast({:task, name, timeout, fun, params}, state) do
-    result = apply(state[:job], name, timeout, fun, params)
+  def handle_cast({:task, {job_id, {name, timeout, fun, params}}}, state) do
+    result = apply(job_id, name, timeout, fun, params)
     Job.task_completed(state[:job], {name, result, self()})
     {:noreply, state}
   end
 
   def apply(job_id, task_name, timeout, function, args) do
-    tick = :erlang.monotonic_time(:millisecond)
+    Phoenix.PubSub.local_broadcast(
+      SPE.PubSub,
+      job_id,
+      {:spe, :erlang.monotonic_time(:millisecond), {job_id, :task_started, task_name}}
+    )
+
     effective_timeout = if !timeout, do: :infinity, else: timeout
     Logger.debug("[Worker #{inspect(self())}]: Task #{inspect(task_name)} Arguments #{inspect(args)}")
 
     task_fun = fn ->
       try do
-        Kernel.apply(function, [args])
+        {:result, Kernel.apply(function, [args])}
       rescue
         exception ->
           Logger.debug("[#{inspect(task_name)}]: Capturada excepción en el hijo: #{inspect(exception)}")
@@ -51,23 +56,20 @@ defmodule Worker do
 
     result =
         try do
-          {:result, Task.await(task, effective_timeout)}
+          Task.await(task, effective_timeout)
         catch
           :exit, {:timeout, _} ->
             Logger.debug("Task.await ha hecho timeout.")
             {:failed, :timeout}
         end
 
-
-    tac = :erlang.monotonic_time(:millisecond)
-
-    Logger.debug("[Worker #{inspect(self())}]: Sending to PubSub message queue #{inspect(result)}")
+    Logger.debug("[Worker #{inspect(self())}]: Sending to PubSub #{inspect(job_id)} message queue #{inspect(result)}")
 
     # Comunicación a todos de las tareas terminadas
     Phoenix.PubSub.local_broadcast(
       SPE.PubSub,
-      "#{inspect(job_id)}",
-      {:spe, tac - tick, {job_id, :task_terminated, task_name}}
+      job_id,
+      {:spe, :erlang.monotonic_time(:millisecond), {job_id, :task_terminated, task_name}}
     )
 
     result
