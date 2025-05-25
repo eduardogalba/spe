@@ -7,7 +7,7 @@ defmodule JobManager do
   end
 
   def handle_call({:submit, job_desc}, _from, state) do
-    job_id = make_ref()
+    job_id = "#{inspect(make_ref())}"
 
     new_jobs =
       state[:jobs]
@@ -34,8 +34,10 @@ defmodule JobManager do
       # Pensandolo bien el JobManager no creo que necesita saber mas la informacion
       # del job, simplemente su pid si este se cae
       job = Map.put(state[:jobs][job_id], :id, job_id)
+      # OJO! Aqui se podria comprobar la longitud maxima de las sublistas
+      # y si num_workers es unbound se establece esa longitud como num_workers
       case SuperManager.start_job(job, state[:num_workers]) do
-        {:ok, _} -> {:reply, :ok, state}
+        {:ok, _} -> {:reply, {:ok, job_id}, state}
         any -> {:reply, any, state}
       end
     end
@@ -58,7 +60,7 @@ defmodule JobManager do
         %{},
         fn  {task_name, desc} , acc ->
           if (desc["enables"]) do
-            Map.put(acc, task_name, Tuple.to_list(desc["enables"]))
+            Map.put(acc, task_name, desc["enables"])
           else
             acc
           end
@@ -86,6 +88,8 @@ defmodule JobManager do
 
       job = Map.put(new_state[:jobs][job_id], :id, job_id)
 
+      # OJO! Aqui se podria comprobar la longitud maxima de las sublistas
+      # y si num_workers es unbound se establece esa longitud como num_workers
       SPE.job_ready(job_id, SuperManager.start_job(job, state[:num_workers]))
 
       {:noreply, Map.put(state, :waiting, new_waiting)}

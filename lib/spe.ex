@@ -55,8 +55,8 @@ defmodule SPE do
           )
 
         {:noreply, new_state}
-      :ok ->
-        {:reply, :ok, state}
+      {:ok, _} = ok ->
+        {:reply, ok, state}
       {:error, _} = error ->
         {:reply, error, state}
     end

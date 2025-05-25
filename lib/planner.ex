@@ -7,7 +7,7 @@ defmodule Planner do
 
 
     enabled_names =
-      List.foldr(tasks, [], fn task, acc -> [Tuple.to_list(Map.get(task, "enables", {})) | acc] end)
+      List.foldr(tasks, [], fn task, acc -> [Map.get(task, "enables", {}) | acc] end)
       |> Enum.uniq()
       |> List.foldr([], fn enables, acc ->
         if (enable = List.first(enables)), do: [enable|acc], else: acc
@@ -25,14 +25,17 @@ defmodule Planner do
 
         dependent_tasks =
           tasks
-          |> Enum.filter(fn t -> task_name in Tuple.to_list(Map.get(t, "enables", {})) end)
+          |> Enum.filter(fn t -> task_name in Map.get(t, "enables", {}) end)
           |> Enum.map(& &1["name"])
 
         if (dependent_tasks == []), do: acc, else: Map.put(acc, task_name, dependent_tasks)
       end)
 
     planned = khan_loop(tasks_dependencies, free_tasks, [])
-    plan = group_tasks(planned, tasks_dependencies, num_workers)
+
+    eff_num_workers = if num_workers == :unbound, do: length(planned), else: num_workers
+    # OJO! Hallar la maxima longitud de las sublistas
+    plan = group_tasks(planned, tasks_dependencies, eff_num_workers)
 
     JobManager.plan_ready(job_id, plan)
   end

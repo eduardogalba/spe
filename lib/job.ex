@@ -213,8 +213,8 @@ defmodule Job do
             [remaining_tasks | next_tasks]
           end
 
-        Logger.info(Logger.info("[Job #{inspect(self())}]: Tareas restantes #{inspect(remaining_tasks)}"))
-        Logger.info(Logger.info("[Job #{inspect(self())}]: Nuevo plan #{inspect(new_plan)}"))
+        Logger.info("[Job #{inspect(self())}]: Tareas restantes #{inspect(remaining_tasks)}")
+        Logger.info("[Job #{inspect(self())}]: Nuevo plan #{inspect(new_plan)}")
 
         state
           |> Map.put(:plan, new_plan)

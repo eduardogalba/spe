@@ -47,8 +47,8 @@ defmodule Validator do
         nil ->
           Logger.info("[Validator #{inspect(self())}]: Task #{inspect(task["name"])} has no 'enables' field.")
           true
-        enables when is_tuple(enables) ->
-          valid = Enum.all?(Tuple.to_list(enables), &(&1 in task_names))
+        enables when is_list(enables) ->
+          valid = Enum.all?(enables, &(&1 in task_names))
           if valid do
             Logger.info("[Validator #{inspect(self())}]: Task #{inspect(task["name"])} has valid 'enables' field.")
           else
@@ -89,7 +89,7 @@ defmodule Validator do
            )) or
            !Map.has_key?(task, "timeout"),
            _ <- Logger.debug("[Validator #{inspect(self())}]: Has it enables? Is it a list?"),
-         true <- (Map.has_key?(task, "enables") and is_tuple(task["enables"])) or !(Map.has_key?(task, "enables")) do
+         true <- (Map.has_key?(task, "enables") and is_list(task["enables"])) or !(Map.has_key?(task, "enables")) do
       Logger.info("Task validation passed for: #{inspect(task["name"])}")
       true
     else
