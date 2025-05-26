@@ -2,7 +2,7 @@ defmodule Validator do
   require Logger
 
   def valid_job?(job) do
-    Logger.info("[Validator #{inspect(self())}]: Validating job...")
+    Logger.debug("[Validator #{inspect(self())}]: Validating job...")
     with _ <- Logger.debug("[Validator #{inspect(self())}]: Is the description a map?"),
       true <- is_map(job),
       _ <- Logger.debug("[Validator #{inspect(self())}]: Contains fields: name and tasks?"),
@@ -17,7 +17,7 @@ defmodule Validator do
       true <- unique_task_names?(job["tasks"]),
       _ <- Logger.debug("[Validator #{inspect(self())}]: Are the enables field properly set?"),
       true <- valid_enable_tasks?(job["tasks"]) do
-        Logger.info("[Validator #{inspect(self())}]: Job validation passed.")
+        Logger.debug("[Validator #{inspect(self())}]: Job validation passed.")
         true
     else
       _ ->
@@ -27,11 +27,11 @@ defmodule Validator do
   end
 
   defp unique_task_names?(tasks) do
-    Logger.info("[Validator #{inspect(self())}]: Checking for unique task names...")
+    Logger.debug("[Validator #{inspect(self())}]: Checking for unique task names...")
     names = Enum.map(tasks, & &1["name"])
     result = Enum.uniq(names) == names
     if result do
-      Logger.info("[Validator #{inspect(self())}]: All task names are unique.")
+      Logger.debug("[Validator #{inspect(self())}]: All task names are unique.")
     else
       Logger.error("[Validator #{inspect(self())}]: Duplicate task names found.")
     end
@@ -39,18 +39,18 @@ defmodule Validator do
   end
 
   defp valid_enable_tasks?(tasks) do
-    Logger.info("[Validator #{inspect(self())}]: Validating 'enables' field for tasks...")
+    Logger.debug("[Validator #{inspect(self())}]: Validating 'enables' field for tasks...")
     task_names = Enum.map(tasks, & &1["name"])
 
     result = Enum.all?(tasks, fn task ->
       case Map.get(task, "enables") do
         nil ->
-          Logger.info("[Validator #{inspect(self())}]: Task #{inspect(task["name"])} has no 'enables' field.")
+          Logger.debug("[Validator #{inspect(self())}]: Task #{inspect(task["name"])} has no 'enables' field.")
           true
         enables when is_list(enables) ->
           valid = Enum.all?(enables, &(&1 in task_names))
           if valid do
-            Logger.info("[Validator #{inspect(self())}]: Task #{inspect(task["name"])} has valid 'enables' field.")
+            Logger.debug("[Validator #{inspect(self())}]: Task #{inspect(task["name"])} has valid 'enables' field.")
           else
             Logger.error("[Validator #{inspect(self())}]: Task #{inspect(task["name"])} has invalid 'enables' field.")
           end
@@ -62,7 +62,7 @@ defmodule Validator do
     end)
 
     if result do
-      Logger.info("[Validator #{inspect(self())}]: All tasks have valid 'enables' fields.")
+      Logger.debug("[Validator #{inspect(self())}]: All tasks have valid 'enables' fields.")
     else
       Logger.error("[Validator #{inspect(self())}]: Some tasks have invalid 'enables' fields.")
     end
@@ -71,7 +71,7 @@ defmodule Validator do
   end
 
   defp valid_task(task) do
-    Logger.info("Validating task: #{inspect(task["name"])}")
+    Logger.debug("Validating task: #{inspect(task["name"])}")
     with  _ <- Logger.debug("[Validator #{inspect(self())}]: Is the description a map?"),
         true <- is_map(task),
         _ <- Logger.debug("[Validator #{inspect(self())}]: Contains fields: name and exec?"),
@@ -90,7 +90,7 @@ defmodule Validator do
            !Map.has_key?(task, "timeout"),
            _ <- Logger.debug("[Validator #{inspect(self())}]: Has it enables? Is it a list?"),
          true <- (Map.has_key?(task, "enables") and is_list(task["enables"])) or !(Map.has_key?(task, "enables")) do
-      Logger.info("Task validation passed for: #{inspect(task["name"])}")
+      Logger.debug("Task validation passed for: #{inspect(task["name"])}")
       true
     else
       _ ->
