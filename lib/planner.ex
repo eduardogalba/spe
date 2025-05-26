@@ -1,7 +1,7 @@
 defmodule Planner do
   require Logger
 
-  def planning(job_id, job_desc, num_workers) do
+  def planning(job_desc, num_workers) do
     tasks = job_desc["tasks"]
     # Preparing Kahn´s algorithm
 
@@ -35,9 +35,9 @@ defmodule Planner do
 
     eff_num_workers = if num_workers == :unbound, do: length(planned), else: num_workers
     # OJO! Hallar la maxima longitud de las sublistas
-    plan = group_tasks(planned, tasks_dependencies, eff_num_workers)
-    Logger.info("[Planner #{inspect(self())}]: Sending plan.. #{inspect(plan)}")
-    JobManager.plan_ready(job_id, plan)
+    #Logger.info("[Planner #{inspect(self())}]: Sending plan.. #{inspect(plan)}")
+    #JobManager.plan_ready(job_id, plan)
+    group_tasks(planned, tasks_dependencies, eff_num_workers)
   end
 
   def find_next_independent([], _deps, _done), do: nil

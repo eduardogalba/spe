@@ -25,6 +25,14 @@ defmodule Worker do
     {:noreply, state}
   end
 
+  def handle_call(:are_u_ready, _from, state) do
+    {:reply, :ok, state}
+  end
+
+  def are_u_ready?(worker_pid) do
+    GenServer.call(worker_pid, :are_u_ready)
+  end
+
   def apply(job_id, task_name, timeout, function, args) do
     Phoenix.PubSub.local_broadcast(
       SPE.PubSub,
@@ -33,36 +41,32 @@ defmodule Worker do
     )
 
     effective_timeout = if !timeout, do: :infinity, else: timeout
-    Logger.debug("[Worker #{inspect(self())}]: Task #{inspect(task_name)} Arguments #{inspect(args)}")
+    #Logger.debug("[Worker #{inspect(self())}]: Task #{inspect(task_name)} Arguments #{inspect(args)}")
 
     task_fun = fn ->
       try do
         {:result, Kernel.apply(function, [args])}
       rescue
         exception ->
-          Logger.debug("[#{inspect(task_name)}]: Capturada excepción en el hijo: #{inspect(exception)}")
-          Logger.error("#{inspect(__STACKTRACE__)}")
+          #Logger.debug("[#{inspect(task_name)}]: Capturada excepción en el hijo: #{inspect(exception)}")
+          #Logger.error("#{inspect(__STACKTRACE__)}")
           {:failed, {:crashed, Exception.message(exception)}}
-      catch
-        kind, reason ->
-          Logger.debug("[#{inspect(task_name)}]: Capturado catch en el hijo: #{inspect(kind)}, #{inspect(reason)}")
-          {:failed, {:crashed, reason}}
       end
     end
 
     task = Task.async(task_fun)
 
-    Logger.debug("[Worker #{inspect(self())}]: Primera linea de defensa atravesada")
+    #Logger.debug("[Worker #{inspect(self())}]: Primera linea de defensa atravesada")
 
     result =
         try do
           Task.await(task, effective_timeout)
         catch
           :exit, {:timeout, _} ->
-            Logger.debug("Task.await ha hecho timeout.")
+            #Logger.debug("Task.await ha hecho timeout.")
             {:failed, :timeout}
           :exit, reason ->
-            Logger.debug("Task.await ha terminado por exit: #{inspect(reason)}")
+            #Logger.debug("Task.await ha terminado por exit: #{inspect(reason)}")
             {:failed, reason}
         end
 

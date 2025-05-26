@@ -3,7 +3,7 @@ defmodule Job do
   require Logger
 
   def init(state) do
-    Logger.info("[Job #{inspect(self())}]: Job starting...")
+    Logger.debug("[Job #{inspect(self())}]: Job starting...")
     {:ok, state}
   end
 
@@ -13,7 +13,7 @@ defmodule Job do
     new_state =
       state
       |> Map.put(:returns, %{}) # Esto tambien sirve para los argumentos de las tareas
-      |> Map.put(:pending_tasks, [])
+      |> Map.put(:ongoing_tasks, [])
       |> Map.put(:free_workers, [])
       |> Map.put(:results, %{})
       |> Map.put(:time_start, :erlang.monotonic_time(:millisecond)) # Empieza el cronometro
@@ -23,10 +23,11 @@ defmodule Job do
   end
 
   def handle_cast({:worker_ready, worker_pid}, state) do
-    Logger.info("[Job #{inspect(self())}]: Nuevo worker #{inspect(worker_pid)}...")
+    Logger.debug("[Job #{inspect(self())}]: Nuevo worker #{inspect(worker_pid)}...")
     free_workers = state[:free_workers] ++ [worker_pid]
     # Si se cae, me llegara una notificacion
     Process.monitor(worker_pid)
+    Worker.are_u_ready?(worker_pid)
     new_state =
       state
       |> Map.put(:free_workers, free_workers)
@@ -35,10 +36,10 @@ defmodule Job do
   end
 
   def handle_cast({:task_terminated, {task_name, {:result, value}, worker_pid}}, state) do
-    Logger.info("[Job #{inspect(self())}]: Handling task #{inspect(task_name)} ending...")
-    new_pending_tasks = List.delete(state[:pending_tasks], task_name)
-    Logger.info("[Job #{inspect(self())}]: These are the tasks stil running => #{inspect(new_pending_tasks)}")
-    Logger.info("[Job #{inspect(self())}]: Task Name: #{inspect(task_name)} Result: #{inspect(value)}")
+    Logger.debug("[Job #{inspect(self())}]: Handling task #{inspect(task_name)} ending...")
+    new_ongoing_tasks = List.delete(state[:ongoing_tasks], task_name)
+    #Logger.debug("[Job #{inspect(self())}]: These are the tasks stil running => #{inspect(new_ongoing_tasks)}")
+    Logger.debug("[Job #{inspect(self())}]: Task Name: #{inspect(task_name)} Result: #{inspect(value)}")
     new_returns =
       state[:returns]
       |> Map.put(task_name, value)
@@ -50,13 +51,13 @@ defmodule Job do
     new_state =
       state
       |> Map.put(:returns, new_returns)
-      |> Map.put(:pending_tasks, new_pending_tasks)
+      |> Map.put(:ongoing_tasks, new_ongoing_tasks)
       |> Map.put(:results, new_results)
       |> Map.put(:free_workers, state[:free_workers] ++ [worker_pid])
       |> Map.put(:busy_workers, Map.delete(state[:busy_workers], worker_pid))
 
-    if new_pending_tasks == [] and Map.keys(state[:tasks]) do
-      Logger.info("[Job #{inspect(self())}]: Next plan floor = > #{inspect(state[:plan])}")
+    if new_ongoing_tasks == [] and Map.keys(state[:tasks]) do
+      #Logger.debug("[Job #{inspect(self())}]: Next plan floor = > #{inspect(state[:plan])}")
       should_we_finish?(new_state)
     else
       {:noreply, new_state}
@@ -64,20 +65,36 @@ defmodule Job do
   end
 
   def handle_cast({:task_terminated, {task_name, {:failed, reason}, worker_pid}}, state) do
-    Logger.info("[Job #{inspect(self())}]: Handling task failing...")
-    new_pending_tasks = List.delete(state[:pending_tasks], task_name)
+    Logger.debug("[Job #{inspect(self())}]: Handling task #{inspect(task_name)} failing...")
+    new_ongoing_tasks = List.delete(state[:ongoing_tasks], task_name)
     disable_tasks = Planner.find_dependent_tasks(state[:enables], task_name)
-    Logger.info("[Job #{inspect(self())}]: Que falta por hacer #{inspect(new_pending_tasks)}...")
-    Logger.info("[Job #{inspect(self())}]: Tareas a deshabilitar #{inspect(disable_tasks)}...")
+    new_worker_pid =
+      case worker_pid do
+        {:fallen_worker, pid} -> pid
+        pid -> pid
+      end
+    new_free_workers =
+      case worker_pid do
+        {:fallen_worker, _pid} -> []
+        pid -> [pid]
+      end
+    Logger.debug("[Job #{inspect(self())}]: Que falta por hacer #{inspect(new_ongoing_tasks)}...")
+    Logger.debug("[Job #{inspect(self())}]: Tareas a deshabilitar #{inspect(disable_tasks)}...")
+
+    Logger.debug("[Job #{inspect(self())}]: Results => #{inspect(state[:results])}")
+    Logger.debug("[Job #{inspect(self())}]: Returns => #{inspect(state[:returns])}")
 
     new_state =
       if disable_tasks == [] do
         new_returns = Map.put(state[:returns], task_name, {:failed, reason})
+        new_results = Map.put(state[:results], task_name, {:failed, reason})
 
         state
-        |> Map.put(:pending_tasks, new_pending_tasks)
+        |> Map.put(:ongoing_tasks, new_ongoing_tasks)
         |> Map.put(:returns, new_returns)
-        |> Map.put(:busy_workers, Map.delete(state[:busy_workers], worker_pid))
+        |> Map.put(:results, new_results)
+        |> Map.put(:busy_workers, Map.delete(state[:busy_workers], new_worker_pid))
+        |> Map.put(:free_workers, state[:free_workers] ++ new_free_workers)
 
       else
 
@@ -94,7 +111,7 @@ defmodule Job do
           new_plan
           |> Enum.filter(fn sublist -> !Enum.empty?(sublist) end)
 
-        IO.puts("Nuevo plan: #{inspect(new_plan_cleaned)}")
+        Logger.debug("Nuevo plan: #{inspect(new_plan_cleaned)}")
 
         new_returns =
           Enum.reduce(disable_tasks, state[:returns],
@@ -110,16 +127,16 @@ defmodule Job do
             end)
           |> Map.put(task_name, {:failed, reason})
 
-        IO.puts("Tareas hechas #{inspect(new_returns)}")
+        Logger.debug("Tareas hechas #{inspect(new_returns)}")
         # Actualiza el estado con los nuevos valores
 
         state
         |> Map.put(:returns, new_returns)
-        |> Map.put(:pending_tasks, new_pending_tasks)
+        |> Map.put(:ongoing_tasks, new_ongoing_tasks)
         |> Map.put(:plan, new_plan_cleaned)
         |> Map.put(:results, new_results)
-        |> Map.put(:free_workers, state[:free_workers] ++ [worker_pid])
-        |> Map.put(:busy_workers, Map.delete(state[:busy_workers], worker_pid))
+        |> Map.put(:free_workers, state[:free_workers] ++ new_free_workers)
+        |> Map.put(:busy_workers, Map.delete(state[:busy_workers], new_worker_pid))
 
       end
 
@@ -127,25 +144,29 @@ defmodule Job do
   end
 
   def handle_info({:notify_ready, worker_pid}, state) do
-    Logger.info("[Job #{inspect(self())}]: Adding new worker #{inspect(worker_pid)}...")
-    free_workers = state[:free_workers] ++ [worker_pid]
-    new_state =
-      state
-      |> Map.put(:free_workers, free_workers)
-
+    Logger.debug("[Job #{inspect(self())}]: Adding new worker #{inspect(worker_pid)}...")
     worker_ready(self(), worker_pid)
-    {:noreply, new_state}
+    {:noreply, state}
   end
 
   def handle_info({:DOWN, _ref, :process, pid, reason}, state) do
 
     if reason != :normal do
-      Logger.info("[Job #{inspect(self())}]: Handling Worker #{inspect(pid)} failing")
+      Logger.debug("[Job #{inspect(self())}]: Handling Worker #{inspect(pid)} failing because of #{inspect(reason)}")
       task_name = Map.get(state[:busy_workers], pid)
-      task_completed(self(), {task_name, {:failed, reason}, pid})
+      Logger.debug("[Job #{inspect(self())}]: Previous task being done #{inspect(task_name)}")
+
+      task_completed(self(), {task_name, {:failed, reason}, {:fallen_worker, pid}})
+      new_free_workers = List.delete(state[:free_workers], pid)
+      new_state =
+        state
+        |> Map.put(:free_workers, new_free_workers)
+
+      {:noreply, new_state}
+    else
+      {:noreply, state}
     end
 
-    {:noreply, state}
   end
 
   def task_completed(job_id, {task_name, result, worker_pid}) do
@@ -159,9 +180,9 @@ defmodule Job do
   defp should_we_finish?(state) do
     case dispatch_tasks(state) do
       :wait ->
-        if (length(Map.keys(state[:tasks])) == length(Map.keys(state[:returns]))) do
-          Logger.info("[Job #{inspect(self())}]: Finished all tasks...")
-          Logger.info("[Job #{inspect(self())}]: Results #{inspect(state[:results])}")
+        if (length(Map.keys(state[:tasks])) == length(Map.keys(state[:results]))) do
+          Logger.debug("[Job #{inspect(self())}]: Finished all tasks...")
+          Logger.debug("[Job #{inspect(self())}]: Results #{inspect(state[:results])}")
           failed =
             state[:results]
             |> Map.values()
@@ -173,7 +194,7 @@ defmodule Job do
               end)
 
           status = if failed, do: :failed, else: :succeeded
-          Logger.info("[Job #{inspect(self())}]: Sending to PubSub message queue #{inspect(state[:id])}")
+          Logger.debug("[Job #{inspect(self())}]: Sending to PubSub message queue #{inspect(state[:id])}")
 
           Phoenix.PubSub.local_broadcast(
             SPE.PubSub,
@@ -191,7 +212,7 @@ defmodule Job do
         end
 
       new_state ->
-        Logger.info("[Job #{inspect(self())}]: Job is not finished yet. Conitnuing..")
+        Logger.debug("[Job #{inspect(self())}]: Job is not finished yet. Conitnuing..")
         {:noreply, new_state}
     end
   end
@@ -199,15 +220,16 @@ defmodule Job do
   defp dispatch_tasks(state) do
     case state[:plan] do
       [] ->
-        Logger.info("[Job #{inspect(self())}]: No more tasks left to run...")
+        Logger.debug("[Job #{inspect(self())}]: No more tasks left to run...")
         :wait
 
       [first_tasks | next_tasks] ->
 
-        Logger.info("[Job #{inspect(self())}]: This is the sequence of tasks #{inspect(state[:plan])}")
+        Logger.debug("[Job #{inspect(self())}]: This is the sequence of tasks #{inspect(state[:plan])}")
         free_workers = state[:free_workers]
         {to_assign, remaining_tasks} = Enum.split(first_tasks, length(free_workers))
 
+        Logger.debug("[Job #{inspect(self())}]: The are these workers #{inspect(free_workers)} available")
         busy_workers =
           Enum.zip(to_assign, free_workers)
           |> Enum.reduce(%{}, fn {task_name, worker_pid}, acc ->
@@ -217,6 +239,7 @@ defmodule Job do
         # Empareja tareas y workers
         Enum.zip(to_assign, free_workers)
         |> Enum.each(fn {task_name, worker_pid} ->
+          Logger.debug("[Job #{inspect(self())}]: Assigning task #{inspect(task_name)} to worker #{inspect(worker_pid)}")
           Worker.send_task(
             worker_pid,
             state[:id],
@@ -226,7 +249,7 @@ defmodule Job do
             state[:returns]
           )
         end)
-        Logger.info("[Job #{inspect(self())}]: Starting tasks #{inspect(to_assign)}")
+        Logger.debug("[Job #{inspect(self())}]: Starting tasks #{inspect(to_assign)}")
 
 
         # Los workers que quedan libres después de asignar
@@ -240,12 +263,12 @@ defmodule Job do
             [remaining_tasks | next_tasks]
           end
 
-        Logger.info("[Job #{inspect(self())}]: Remaining tasks after dispatching #{inspect(remaining_tasks)}")
-        Logger.info("[Job #{inspect(self())}]: New sequence of tasks #{inspect(new_plan)}")
+        Logger.debug("[Job #{inspect(self())}]: Remaining tasks after dispatching #{inspect(remaining_tasks)}")
+        Logger.debug("[Job #{inspect(self())}]: New sequence of tasks #{inspect(new_plan)}")
 
         state
           |> Map.put(:plan, new_plan)
-          |> Map.put(:pending_tasks, state[:pending_tasks] ++ to_assign)
+          |> Map.put(:ongoing_tasks, state[:ongoing_tasks] ++ to_assign)
           |> Map.put(:free_workers, new_free_workers)
           |> Map.put(:busy_workers, busy_workers)
 
