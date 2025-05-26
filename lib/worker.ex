@@ -61,6 +61,9 @@ defmodule Worker do
           :exit, {:timeout, _} ->
             Logger.debug("Task.await ha hecho timeout.")
             {:failed, :timeout}
+          :exit, reason ->
+            Logger.debug("Task.await ha terminado por exit: #{inspect(reason)}")
+            {:failed, reason}
         end
 
     Logger.debug("[Worker #{inspect(self())}]: Sending to PubSub #{inspect(job_id)} message queue #{inspect(result)}")
