@@ -68,12 +68,18 @@ defmodule JobManager do
 
     # Si no hay num_workers definido optamos por el nivel
     # de concurrencia que pueda necesitar mas workers
+    # Cambio de estrategia crear un proceso es costoso y tarda bastante
+    # Si este maximo es menor que el propuesto por el usuario, se ignora
+    maximum_concurrent_tasks = job_plan |> Enum.map(&length/1) |> Enum.max()
     num_workers =
-      if state[:num_workers] == :unbound do
-        job_plan |> Enum.map(&length/1) |> Enum.max()
+      if state[:num_workers] == :unbound or maximum_concurrent_tasks < state[:num_workers] do
+        maximum_concurrent_tasks
       else
         state[:num_workers]
       end
+
+    Logger.info("[JobManager #{inspect(self())}]: For Job #{inspect(job_id)} will run maximum #{inspect(num_workers)} tasks.")
+    Logger.info("[JobManager #{inspect(self())}]: For Job #{inspect(job_id)} the plan is #{inspect(job_plan)}")
 
     Logger.debug("[JobManager #{inspect(self())}]: Tengo en enables #{inspect(enables)}")
 
