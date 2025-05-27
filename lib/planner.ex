@@ -32,12 +32,23 @@ defmodule Planner do
       end)
 
     planned = khan_loop(tasks_dependencies, free_tasks, [])
+    priority = Map.get(job_desc, "priority", [])
+    case planned do
+      {:ok, plan} ->
+        eff_num_workers = if num_workers == :unbound, do: length(plan), else: num_workers
+        # OJO AQUI se podria ver si en la descripcion tiene algo asi como priority y elegir
+        # otra funcion que tenga en cuenta las prioridades de las tareas, en vez de usar,
+        # group_tasks
+        if priority != [] do
+          {:ok, group_tasks_with_priority(plan, tasks_dependencies, eff_num_workers, priority)}
+        else
+          {:ok, group_tasks(plan, tasks_dependencies, eff_num_workers)}
+        end
+      {:error, error} ->
+        {:error, error}
+    end
 
-    eff_num_workers = if num_workers == :unbound, do: length(planned), else: num_workers
-    # OJO! Hallar la maxima longitud de las sublistas
-    #Logger.info("[Planner #{inspect(self())}]: Sending plan.. #{inspect(plan)}")
-    #JobManager.plan_ready(job_id, plan)
-    group_tasks(planned, tasks_dependencies, eff_num_workers)
+
   end
 
   def find_next_independent([], _deps, _done), do: nil
@@ -65,13 +76,32 @@ defmodule Planner do
     find_dependent_tasks_(enables, rest ++ new_tasks, acc ++ new_tasks)
   end
 
-  def complete_task([], _task, new_tasks), do: new_tasks
-  def complete_task([task_level | rest], task, acc) do
-    if task in task_level do
-      complete_task(rest, task, acc ++ [List.delete(task_level, task)])
-    else
-      complete_task(rest, task, acc ++ [task_level])
-    end
+
+  def group_tasks_with_priority(tasks, deps, num_workers, priority) do
+    group_tasks_with_priority_(tasks, deps, num_workers, priority, [])
+  end
+
+  defp group_tasks_with_priority_([], _deps, _num_workers, _priority, acc), do: Enum.reverse(acc)
+  defp group_tasks_with_priority_(tasks, deps, num_workers, priority, acc) do
+    # Separa tareas prioritarias y no prioritarias
+    {prio_tasks, other_tasks} = Enum.split_with(tasks, &(&1 in priority))
+
+    # Intenta meter primero las prioritarias independientes
+    {group, rest_prio} = take_independent(prio_tasks, deps, num_workers, [], [])
+    n_left = num_workers - length(group)
+
+    # Si queda hueco, rellena con no prioritarias independientes
+    {group2, rest_others} =
+      if n_left > 0 do
+        take_independent(other_tasks, deps, n_left, [], [])
+      else
+        {[], other_tasks}
+      end
+
+    new_group = group ++ group2
+    rest = rest_prio ++ rest_others
+
+    group_tasks_with_priority_(rest, deps, num_workers, priority, [new_group | acc])
   end
 
   def group_tasks([], _deps, _num_workers), do: []
@@ -107,7 +137,7 @@ defmodule Planner do
       if (!Enum.empty?(dependencies)) do
         {:error, :graph_has_cycle}
       else
-        planned
+        {:ok, planned}
       end
     else
       [n | _] = free_tasks

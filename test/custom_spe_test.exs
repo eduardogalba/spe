@@ -33,35 +33,14 @@ defmodule SPETest do
           "name" => "task5",
           "exec" => fn %{"task2" => v2, "task3" => v3, "task4" => v4} ->
             IO.puts("value: #{inspect(v2 + v3 + v4)}")
-          end,
-          "enables" => ["task7"]
+          end
         },
         %{
           "name" => "task6",
           "exec" => fn _ -> IO.puts("hello") end
-        },
-        %{
-          "name" => "task7",
-          "exec" => fn %{"task2" => v2, "task3" => v3, "task4" => v4} ->
-            :timer.sleep(20000)
-          end,
-          "enables" => ["task8"]
-        },
-        %{
-          "name" => "task8",
-          "exec" => fn %{"task2" => v2, "task3" => v3, "task4" => v4} ->
-            1+3
-          end,
-          "enables" => ["task9"]
-        },
-        %{
-          "name" => "task9",
-          "exec" => fn %{"task8" => v8} ->
-            v8 + 1
-          end
         }
-
-      ]
+      ],
+      "priority" => ["task2", "task4"]
     }
 
     SPE.start_link([{:num_workers, 2}])
