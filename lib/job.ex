@@ -206,13 +206,17 @@ defmodule Job do
             }
           )
 
+          JobRepository.delete_job(state[:id])
+
           {:stop, :normal, state}
         else
+          JobRepository.save_job_state(state[:id], state)
           {:noreply, state}
         end
 
       new_state ->
         Logger.debug("[Job #{inspect(self())}]: Job is not finished yet. Conitnuing..")
+        JobRepository.save_job_state(state[:id], state)
         {:noreply, new_state}
     end
   end
