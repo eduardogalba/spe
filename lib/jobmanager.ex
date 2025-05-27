@@ -3,6 +3,23 @@ defmodule JobManager do
   require Logger
 
   def init(state) do
+    unfinished_jobs = JobRepository.list_unfinished_jobs()
+
+    Enum.each(unfinished_jobs, fn job ->
+      {:ok, job_state} = JobRepository.get_job_state(job.id)
+      # Reconstruir el estado completo
+      full_state = %{
+        id: job.id,
+        plan: job_state.plan,
+        results: job_state.results,
+        returns: job_state.returns,
+        enables: job_state.enables,
+        num_workers: job_state.num_workers,
+        tasks: job_state.tasks
+      }
+      SuperManager.start_job(full_state, job_state.num_workers)
+    end)
+
     {:ok, state}
   end
 
