@@ -8,53 +8,59 @@ defmodule JobManager do
 
   def handle_call({:submit, job_desc}, _from, state) do
     job_id = "#{inspect(make_ref())}"
-    new_plan = Planner.planning(job_desc, state[:num_workers])
+    plan = Planner.planning(job_desc, state[:num_workers])
 
-    Logger.debug("[JobManager #{inspect(self())}]: Receiving plan for #{inspect(job_id)}...")
+    case plan do
+      {:ok, new_plan} ->
+        Logger.debug("[JobManager #{inspect(self())}]: Receiving plan for #{inspect(job_id)}...")
 
-    tasks =
-      Enum.reduce(
-        job_desc["tasks"],
-        %{},
-        fn task_desc, acc ->
-          Map.put(acc, task_desc["name"], task_desc)
-        end)
+        tasks =
+          Enum.reduce(
+            job_desc["tasks"],
+            %{},
+            fn task_desc, acc ->
+              Map.put(acc, task_desc["name"], task_desc)
+            end)
 
-    enables =
-      Enum.reduce(tasks,
-        %{},
-        fn  {task_name, desc} , acc ->
-          if (desc["enables"]) do
-            Map.put(acc, task_name, desc["enables"])
+        enables =
+          Enum.reduce(tasks,
+            %{},
+            fn  {task_name, desc} , acc ->
+              if (desc["enables"]) do
+                Map.put(acc, task_name, desc["enables"])
+              else
+                acc
+              end
+          end)
+
+        # Si no hay num_workers definido optamos por el nivel
+        # de concurrencia que pueda necesitar mas workers
+        # Cambio de estrategia crear un proceso es costoso y tarda bastante
+        # Si este maximo es menor que el propuesto por el usuario, se ignora
+        maximum_concurrent_tasks = new_plan |> Enum.map(&length/1) |> Enum.max()
+        num_workers =
+          if state[:num_workers] == :unbound or maximum_concurrent_tasks < state[:num_workers] do
+            maximum_concurrent_tasks
           else
-            acc
+            state[:num_workers]
           end
-      end)
 
-    # Si no hay num_workers definido optamos por el nivel
-    # de concurrencia que pueda necesitar mas workers
-    # Cambio de estrategia crear un proceso es costoso y tarda bastante
-    # Si este maximo es menor que el propuesto por el usuario, se ignora
-    maximum_concurrent_tasks = new_plan |> Enum.map(&length/1) |> Enum.max()
-    num_workers =
-      if state[:num_workers] == :unbound or maximum_concurrent_tasks < state[:num_workers] do
-        maximum_concurrent_tasks
-      else
-        state[:num_workers]
-      end
+        Logger.debug("[JobManager #{inspect(self())}]: For Job #{inspect(job_id)} will run maximum #{inspect(num_workers)} tasks.")
+        Logger.debug("[JobManager #{inspect(self())}]: For Job #{inspect(job_id)} the plan is #{inspect(new_plan)}")
 
-    Logger.debug("[JobManager #{inspect(self())}]: For Job #{inspect(job_id)} will run maximum #{inspect(num_workers)} tasks.")
-    Logger.debug("[JobManager #{inspect(self())}]: For Job #{inspect(job_id)} the plan is #{inspect(new_plan)}")
+        Logger.debug("[JobManager #{inspect(self())}]: Tengo en enables #{inspect(enables)}")
 
-    Logger.debug("[JobManager #{inspect(self())}]: Tengo en enables #{inspect(enables)}")
+        new_job = %{id: job_id, plan: new_plan, enables: enables, num_workers: num_workers, tasks: tasks}
 
-    new_job = %{id: job_id, plan: new_plan, enables: enables, num_workers: num_workers, tasks: tasks}
+        new_jobs =
+          state[:jobs]
+          |> Map.put(job_id, new_job)
 
-    new_jobs =
-      state[:jobs]
-      |> Map.put(job_id, new_job)
+        {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
+      {:error, error} ->
+        {:reply, {:error, error}, state}
+    end
 
-    {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
   end
 
   def handle_call({:start, job_id}, _from, state) do

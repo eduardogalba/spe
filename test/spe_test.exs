@@ -40,7 +40,19 @@ defmodule SPETest do
     assert {:error, _} = SPE.submit_job(%{"name" => "nisse", "tasks" => [task]})
     task = %{"name" => "t0", "enables" => [], "exec" => fn _ -> 1 + 2 end, "timeout" => nil}
     assert {:error, _} = SPE.submit_job(%{"name" => "nisse", "tasks" => [task]})
-
+    task1 = %{
+      "name" => "t1",
+      "enables" => ["t2"],
+      "exec" => fn _ -> 1 + 2 end,
+      "timeout" => :infinity
+    }
+    task2 = %{
+      "name" => "t2",
+      "enables" => ["t1"],
+      "exec" => fn _ -> 1 + 2 end,
+      "timeout" => :infinity
+    }
+    assert {:error, _} = SPE.submit_job(%{"name" => "cycled_graph", "tasks" => [task1, task2]})
     task = %{
       "name" => "t0",
       "enables" => ["t1"],
