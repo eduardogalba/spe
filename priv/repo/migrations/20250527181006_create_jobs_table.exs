@@ -3,7 +3,7 @@ defmodule Repo.Migrations.CreateJobsTable do
 
   def change do
     create table(:jobs, primary_key: false) do
-      add :id, :string, primary_key: true
+      add :name, :string, primary_key: true
       add :plan, :jsonb
       add :num_workers, :integer
       add :enables, :jsonb
@@ -13,6 +13,5 @@ defmodule Repo.Migrations.CreateJobsTable do
       add :inserted_at, :utc_datetime_usec, default: fragment("NOW()")
     end
 
-    create index(:jobs, ["(results->'status')"], name: :jobs_status_index)
   end
 end
