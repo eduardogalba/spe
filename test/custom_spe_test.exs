@@ -23,11 +23,11 @@ defmodule SPETest do
         %{
           "name" => "task4",
           "exec" => fn %{"task2" => v2} ->
-            :timer.sleep(1000)
+            :timer.sleep(10000)
             v2 * 3
           end,
           "enables" => ["task5"],
-          "timeout" => 800
+          "timeout" => :infinity
         },
         %{
           "name" => "task5",
@@ -43,7 +43,7 @@ defmodule SPETest do
       "priority" => ["task2", "task4"]
     }
 
-    SPE.start_link([{:num_workers, 2}])
+    {:ok, spe} = SPE.start_link([{:num_workers, 2}])
 
     {:ok, job_id} = SPE.submit_job(desc)
 
@@ -51,6 +51,7 @@ defmodule SPETest do
 
     SPE.start_job(job_id)
 
+    Process.exit(spe, :brutal_kill)
 
     receive_wait()
   end
