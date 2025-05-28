@@ -51,6 +51,45 @@ defmodule Planner do
 
   end
 
+  def planning_task_description(task_desc, num_workers) do
+    tasks = Map.values(task_desc)
+
+    enabled_names =
+      tasks
+      |> Enum.flat_map(&Map.get(&1, "enables", []))
+      |> Enum.uniq()
+
+    # Extraer tareas sin dependencias entrantes
+    free_tasks =
+      tasks
+      |> Enum.filter(fn task -> not (task["name"] in enabled_names) end)
+      |> Enum.map(& &1["name"])
+
+    # Extraer dependencias
+    tasks_dependencies =
+      tasks
+      |> Enum.reduce(%{}, fn task, acc ->
+        task_name = task["name"]
+
+        dependent_tasks =
+          tasks
+          |> Enum.filter(fn t -> task_name in Map.get(t, "enables", []) end)
+          |> Enum.map(& &1["name"])
+
+        if dependent_tasks == [], do: acc, else: Map.put(acc, task_name, dependent_tasks)
+      end)
+
+    planned = khan_loop(tasks_dependencies, free_tasks, [])
+
+    case planned do
+      {:ok, plan} ->
+        eff_num_workers = if num_workers == :unbound, do: length(plan), else: num_workers
+        {:ok, group_tasks(plan, tasks_dependencies, eff_num_workers)}
+      {:error, error} ->
+        {:error, error}
+    end
+  end
+
   def find_next_independent([], _deps, _done), do: nil
   def find_next_independent([task | rest], deps, undone, done) do
     # PRE: La lista de tareas es flatten, nada de listas dentro de listas

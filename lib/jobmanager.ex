@@ -3,79 +3,113 @@ defmodule JobManager do
   require Logger
 
   def init(state) do
-    unfinished_jobs = JobRepository.list_unfinished_jobs()
-
-    Enum.each(unfinished_jobs, fn job ->
-      {:ok, job_state} = JobRepository.get_job_state(job.id)
-      # Reconstruir el estado completo
-      full_state = %{
-        id: job.id,
-        plan: job_state.plan,
-        results: job_state.results,
-        returns: job_state.returns,
-        enables: job_state.enables,
-        num_workers: job_state.num_workers,
-        tasks: job_state.tasks
-      }
-      SuperManager.start_job(full_state, job_state.num_workers)
-    end)
-
     {:ok, state}
   end
 
   def handle_call({:submit, job_desc}, _from, state) do
     job_id = "#{inspect(make_ref())}"
-    plan = Planner.planning(job_desc, state[:num_workers])
 
-    case plan do
-      {:ok, new_plan} ->
-        Logger.debug("[JobManager #{inspect(self())}]: Receiving plan for #{inspect(job_id)}...")
+    recovered_job = JobRepository.get_job_state(job_desc["name"])
+    case recovered_job do
+      {:error, :not_found} ->
+        plan = Planner.planning(job_desc, state[:num_workers])
+        case plan do
+          {:ok, new_plan} ->
+            Logger.debug("[JobManager #{inspect(self())}]: Receiving plan for #{inspect(job_id)}...")
 
-        tasks =
-          Enum.reduce(
-            job_desc["tasks"],
-            %{},
-            fn task_desc, acc ->
-              Map.put(acc, task_desc["name"], task_desc)
-            end)
+            tasks =
+              Enum.reduce(
+                job_desc["tasks"],
+                %{},
+                fn task_desc, acc ->
+                  Map.put(acc, task_desc["name"], task_desc)
+                end)
 
-        enables =
-          Enum.reduce(tasks,
-            %{},
-            fn  {task_name, desc} , acc ->
-              if (desc["enables"]) do
-                Map.put(acc, task_name, desc["enables"])
+            enables =
+              Enum.reduce(tasks,
+                %{},
+                fn  {task_name, desc} , acc ->
+                  if (desc["enables"]) do
+                    Map.put(acc, task_name, desc["enables"])
+                  else
+                    acc
+                  end
+              end)
+
+            # Si no hay num_workers definido optamos por el nivel
+            # de concurrencia que pueda necesitar mas workers
+            # Cambio de estrategia crear un proceso es costoso y tarda bastante
+            # Si este maximo es menor que el propuesto por el usuario, se ignora
+            maximum_concurrent_tasks = new_plan |> Enum.map(&length/1) |> Enum.max()
+            num_workers =
+              if state[:num_workers] == :unbound or maximum_concurrent_tasks < state[:num_workers] do
+                maximum_concurrent_tasks
               else
-                acc
+                state[:num_workers]
               end
-          end)
 
-        # Si no hay num_workers definido optamos por el nivel
-        # de concurrencia que pueda necesitar mas workers
-        # Cambio de estrategia crear un proceso es costoso y tarda bastante
-        # Si este maximo es menor que el propuesto por el usuario, se ignora
-        maximum_concurrent_tasks = new_plan |> Enum.map(&length/1) |> Enum.max()
-        num_workers =
-          if state[:num_workers] == :unbound or maximum_concurrent_tasks < state[:num_workers] do
-            maximum_concurrent_tasks
-          else
-            state[:num_workers]
-          end
+            Logger.debug("[JobManager #{inspect(self())}]: For Job #{inspect(job_id)} will run maximum #{inspect(num_workers)} tasks.")
+            Logger.debug("[JobManager #{inspect(self())}]: For Job #{inspect(job_id)} the plan is #{inspect(new_plan)}")
 
-        Logger.debug("[JobManager #{inspect(self())}]: For Job #{inspect(job_id)} will run maximum #{inspect(num_workers)} tasks.")
-        Logger.debug("[JobManager #{inspect(self())}]: For Job #{inspect(job_id)} the plan is #{inspect(new_plan)}")
+            Logger.debug("[JobManager #{inspect(self())}]: Tengo en enables #{inspect(enables)}")
 
-        Logger.debug("[JobManager #{inspect(self())}]: Tengo en enables #{inspect(enables)}")
+            new_job = %{id: job_id, plan: new_plan, enables: enables, num_workers: num_workers, tasks: tasks, name: job_desc["name"]}
 
-        new_job = %{id: job_id, plan: new_plan, enables: enables, num_workers: num_workers, tasks: tasks}
+            new_jobs =
+              state[:jobs]
+              |> Map.put(job_id, new_job)
 
-        new_jobs =
-          state[:jobs]
-          |> Map.put(job_id, new_job)
+            {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
 
-        {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
-      {:error, error} ->
-        {:reply, {:error, error}, state}
+          {:error, error} ->
+            {:reply, {:error, error}, state}
+        end
+
+      {:ok, job} ->
+        Logger.info("Recuperando trabajo después de que el servidor cayera")
+        # Aqui necesita recuperar lo guardado pero reajustar la planificacion
+        # porque puede que existan tareas que no hubiesen llegado a completarse
+        # y ya no formaran parte del plan
+        completed_tasks = Map.keys(job.results)
+        task_desc = Map.drop(job.tasks, completed_tasks)
+
+        plan = Planner.planning_task_description(task_desc, job.num_workers)
+
+        case plan do
+          {:ok, new_plan} ->
+            Logger.info("Se calcula un nuevo plan de recuperacion #{inspect(new_plan)}")
+            maximum_concurrent_tasks = new_plan |> Enum.map(&length/1) |> Enum.max()
+            num_workers =
+              if state[:num_workers] == :unbound or maximum_concurrent_tasks < state[:num_workers] do
+                maximum_concurrent_tasks
+              else
+                state[:num_workers]
+              end
+
+            tasks =
+              Enum.reduce(
+                job_desc["tasks"],
+                %{},
+                fn task_desc, acc ->
+                  Map.put(acc, task_desc["name"], task_desc)
+                end)
+
+            new_job =
+              job
+              |> Map.put(:id, job_id)
+              |> Map.put(:num_workers, num_workers)
+              |> Map.put(:plan, new_plan)
+              |> Map.put(:tasks, tasks)
+
+            new_jobs =
+              state[:jobs]
+              |> Map.put(job_id, new_job)
+
+            {:reply, {:ok, job_id}, Map.put(state, :jobs, new_jobs)}
+
+          {:error, error} ->
+            {:reply, {:error, error}, state}
+        end
     end
 
   end
