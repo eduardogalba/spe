@@ -18,6 +18,7 @@ defmodule SPE do
     }
 
     children = [
+      SPE.Repo,
       pubsub,
       super_manager,
       manager
