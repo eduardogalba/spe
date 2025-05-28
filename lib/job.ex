@@ -194,7 +194,7 @@ defmodule Job do
               end)
 
           status = if failed, do: :failed, else: :succeeded
-          Logger.debug("[Job #{inspect(self())}]: Sending to PubSub message queue #{inspect(state[:id])}")
+          Logger.info("[Job #{inspect(self())}]: Sending to PubSub message queue #{inspect(state[:id])}")
 
           Phoenix.PubSub.local_broadcast(
             SPE.PubSub,
