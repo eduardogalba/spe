@@ -12,10 +12,10 @@ defmodule Job do
 
     new_state =
       state
-      |> Map.put(:returns, %{}) # Esto tambien sirve para los argumentos de las tareas
+      |> Map.put(:returns, Map.get(state, :returns, %{})) # Esto tambien sirve para los argumentos de las tareas
       |> Map.put(:ongoing_tasks, [])
       |> Map.put(:free_workers, [])
-      |> Map.put(:results, %{})
+      |> Map.put(:results, Map.get(state, :results, %{}))
       |> Map.put(:time_start, :erlang.monotonic_time(:millisecond)) # Empieza el cronometro
       |> Map.put(:busy_workers, %{})
 
@@ -181,7 +181,7 @@ defmodule Job do
     case dispatch_tasks(state) do
       :wait ->
         if (length(Map.keys(state[:tasks])) == length(Map.keys(state[:results]))) do
-          Logger.debug("[Job #{inspect(self())}]: Finished all tasks...")
+          Logger.info("[Job #{inspect(self())}]: Finished all tasks...")
           Logger.debug("[Job #{inspect(self())}]: Results #{inspect(state[:results])}")
           failed =
             state[:results]
@@ -206,17 +206,17 @@ defmodule Job do
             }
           )
 
-          JobRepository.delete_job(state[:id])
+          JobRepository.delete_job(state[:name])
 
           {:stop, :normal, state}
         else
-          JobRepository.save_job_state(state[:id], state)
+          JobRepository.save_job_state(state)
           {:noreply, state}
         end
 
       new_state ->
         Logger.debug("[Job #{inspect(self())}]: Job is not finished yet. Conitnuing..")
-        JobRepository.save_job_state(state[:id], state)
+        JobRepository.save_job_state(state)
         {:noreply, new_state}
     end
   end
