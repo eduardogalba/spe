@@ -1,7 +1,7 @@
 defmodule SPE.Schemas.Job do
   use Ecto.Schema
 
-  @primary_key {:id, :string, autogenerate: false}
+  @primary_key {:name, :string, autogenerate: false}
   schema "jobs" do
     field :plan, :map
     field :num_workers, :integer
