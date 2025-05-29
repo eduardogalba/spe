@@ -1,6 +1,6 @@
-# SPE – Job Skeleton Branch
+# SPE
 
-This branch implements the **skeleton for job management** in the SPE (Scalable Parallel Executor) system. It lays the foundation for submitting, planning, and executing jobs composed of interdependent tasks, using Elixir's concurrency primitives and supervision trees.
+This branch implements the **SPE** main structure. It lays the foundation for submitting, planning, and executing jobs composed of interdependent tasks, using Elixir's concurrency primitives and supervision trees.
 
 ## Overview
 
@@ -28,11 +28,10 @@ This branch implements the **skeleton for job management** in the SPE (Scalable 
 
 ### Setup
 
-Clone the repo & checkout the `job-skeleton` branch:
+Clone the repo:
 ```sh
 git clone https://github.com/eduardogalba/spe.git
 cd spe
-git checkout job-skeleton
 ```
 
 Install dependencies:
@@ -64,7 +63,6 @@ job = %{
 }
 SPE.submit_job(job)
 ```
-> **Note**: In this skeleton branch, job execution is not fully implemented—see `Scheduler` for planning logic.
 
 ## Development Roadmap
 
