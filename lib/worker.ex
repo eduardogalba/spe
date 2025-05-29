@@ -40,9 +40,9 @@ defmodule Worker do
   ```
   """
   def init(state) do
-    Logger.debug("[Worker #{inspect(self())}]: init: Me llega en state #{inspect(state)}")
+    Logger.debug("[Worker #{inspect(self())}]: init: Received state #{inspect(state)}")
     send(state[:job], {:notify_ready, self()})
-    Logger.debug("[Worker #{inspect(self())}]: Entrando a init")
+    Logger.debug("[Worker #{inspect(self())}]: Entering init")
     {:ok, state}
   end
 
@@ -59,8 +59,8 @@ defmodule Worker do
   ```
   """
   def start_link(state) do
-    Logger.debug("[SuperWorker #{inspect(self())}]: Iniciando Worker...")
-    Logger.debug("[SuperWorker #{inspect(self())}]: Esto tengo en mi estado #{inspect(state)}")
+    Logger.debug("[SuperWorker #{inspect(self())}]: Starting Worker...")
+    Logger.debug("[SuperWorker #{inspect(self())}]: My state is #{inspect(state)}")
     GenServer.start_link(__MODULE__, state)
   end
 
@@ -168,7 +168,7 @@ defmodule Worker do
         {:result, Kernel.apply(function, [args])}
       rescue
         exception ->
-          # Logger.debug("[#{inspect(task_name)}]: Capturada excepción en el hijo: #{inspect(exception)}")
+          # Logger.debug("[#{inspect(task_name)}]: Exception captured in child: #{inspect(exception)}")
           # Logger.error("#{inspect(__STACKTRACE__)}")
           {:failed, {:crashed, Exception.message(exception)}}
       end
@@ -176,18 +176,18 @@ defmodule Worker do
 
     task = Task.async(task_fun)
 
-    # Logger.debug("[Worker #{inspect(self())}]: Primera linea de defensa atravesada")
+    # Logger.debug("[Worker #{inspect(self())}]: First line of defense crossed")
 
     result =
       try do
         Task.await(task, effective_timeout)
       catch
         :exit, {:timeout, _} ->
-          # Logger.debug("Task.await ha hecho timeout.")
+          # Logger.debug("Task.await timed out.")
           {:failed, :timeout}
 
         :exit, reason ->
-          # Logger.debug("Task.await ha terminado por exit: #{inspect(reason)}")
+          # Logger.debug("Task.await exited with: #{inspect(reason)}")
           {:failed, reason}
       end
 
@@ -195,7 +195,7 @@ defmodule Worker do
       "[Worker #{inspect(self())}]: Sending to PubSub #{inspect(job_id)} message queue #{inspect(result)}"
     )
 
-    # Comunicación a todos de las tareas terminadas
+    # Notify everyone about finished tasks
     Phoenix.PubSub.local_broadcast(
       SPE.PubSub,
       job_id,

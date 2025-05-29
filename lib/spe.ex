@@ -137,7 +137,7 @@ defmodule SPE do
   ```
   """
   def handle_info(msg, state) do
-    Logger.debug("Info generico")
+    Logger.debug("Generic info")
     Logger.debug("#{inspect(msg)}")
     {:noreply, state}
   end

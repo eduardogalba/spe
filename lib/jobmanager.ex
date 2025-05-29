@@ -103,10 +103,9 @@ defmodule JobManager do
             end
           )
 
-        # Si no hay num_workers definido optamos por el nivel
-        # de concurrencia que pueda necesitar mas workers
-        # Cambio de estrategia crear un proceso es costoso y tarda bastante
-        # Si este maximo es menor que el propuesto por el usuario, se ignora
+        # If there is no num_workers defined, we opt for the concurrency level that may require more workers
+        # Strategy change: creating a process is costly and takes quite a while
+        # If this maximum is less than the one proposed by the user, it is ignored
         maximum_concurrent_tasks = new_plan |> Enum.map(&length/1) |> Enum.max()
 
         num_workers =
@@ -124,7 +123,7 @@ defmodule JobManager do
           "[JobManager #{inspect(self())}]: For Job #{inspect(job_id)} the plan is #{inspect(new_plan)}"
         )
 
-        Logger.debug("[JobManager #{inspect(self())}]: Tengo en enables #{inspect(enables)}")
+        Logger.debug("[JobManager #{inspect(self())}]: Enables contains #{inspect(enables)}")
 
         new_job = %{
           id: job_id,
@@ -147,13 +146,8 @@ defmodule JobManager do
 
   def handle_call({:start, job_id}, _from, state) do
     if !Map.has_key?(state[:jobs], job_id) do
-      ## OJO! No para aqui
       {:reply, {:error, :unregistered_job}, state}
     else
-      # Pensandolo bien el JobManager no creo que necesita saber mas la informacion
-      # del job, simplemente su pid si este se cae
-      # OJO! Aqui se podria comprobar la longitud maxima de las sublistas
-      # y si num_workers es unbound se establece esa longitud como num_workers
       job = state[:jobs][job_id]
 
       case SuperManager.start_job(job, job[:num_workers]) do
@@ -177,7 +171,7 @@ defmodule JobManager do
   ```
   """
   def handle_info(msg, state) do
-    Logger.debug("Info generico")
+    Logger.debug("Generic info")
     Logger.debug("#{inspect(msg)}")
     {:noreply, state}
   end

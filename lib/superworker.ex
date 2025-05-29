@@ -40,8 +40,8 @@ defmodule SuperWorker do
       max_seconds: 5
     ]
 
-    # Logger.debug("[SuperWorker #{inspect(self())}]: Iniciando SuperWorker...")
-    # Logger.debug("[SuperWorker #{inspect(self())}]: init: Me llega en info: #{inspect(info)}.")
+    Logger.debug("[SuperWorker #{inspect(self())}]: Starting SuperWorker...")
+    Logger.debug("[SuperWorker #{inspect(self())}]: init: Received info: #{inspect(info)}.")
     num_workers = if info[:num_workers] == :unbound, do: 1, else: info[:num_workers]
 
     workers =
@@ -69,7 +69,7 @@ defmodule SuperWorker do
   ```
   """
   def start_link(job_pid, num_workers) do
-    # Logger.debug("[SuperWorker #{inspect(self())}]: Me llega en start_link: #{inspect(job_pid)}")
+    Logger.debug("[SuperWorker #{inspect(self())}]: Received in start_link: #{inspect(job_pid)}")
     info =
       %{
         job_pid: job_pid,

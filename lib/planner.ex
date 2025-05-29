@@ -45,7 +45,7 @@ defmodule Planner do
   """
   def planning(job_desc, num_workers) do
     tasks = job_desc["tasks"]
-    # Preparing Kahn´s algorithm
+    # Preparing Kahn's algorithm
 
     enabled_names =
       List.foldr(tasks, [], fn task, acc -> [Map.get(task, "enables", []) | acc] end)
@@ -79,9 +79,8 @@ defmodule Planner do
     case planned do
       {:ok, plan} ->
         eff_num_workers = if num_workers == :unbound, do: length(plan), else: num_workers
-        # OJO AQUI se podria ver si en la descripcion tiene algo asi como priority y elegir
-        # otra funcion que tenga en cuenta las prioridades de las tareas, en vez de usar,
-        # group_tasks
+        # NOTE: Here you could check if the description has something like priority and choose
+        # another function that takes task priorities into account, instead of using group_tasks
         if priority != [] do
           {:ok, group_tasks_with_priority(plan, tasks_dependencies, eff_num_workers, priority)}
         else
@@ -114,7 +113,7 @@ defmodule Planner do
   ```
   """
   def find_next_independent([task | rest], deps, undone, done) do
-    # PRE: La lista de tareas es flatten, nada de listas dentro de listas
+    # PRE: The task list is flat, no lists within lists
     task_deps = Map.get(deps, task)
 
     if !task_deps or
@@ -183,14 +182,14 @@ defmodule Planner do
   defp group_tasks_with_priority_([], _deps, _num_workers, _priority, acc), do: Enum.reverse(acc)
 
   defp group_tasks_with_priority_(tasks, deps, num_workers, priority, acc) do
-    # Separa tareas prioritarias y no prioritarias
+    # Separate priority and non-priority tasks
     {prio_tasks, other_tasks} = Enum.split_with(tasks, &(&1 in priority))
 
-    # Intenta meter primero las prioritarias independientes
+    # Try to add independent priority tasks first
     {group, rest_prio} = take_independent(prio_tasks, deps, num_workers, [], [])
     n_left = num_workers - length(group)
 
-    # Si queda hueco, rellena con no prioritarias independientes
+    # If there is space left, fill with independent non-priority tasks
     {group2, rest_others} =
       if n_left > 0 do
         take_independent(other_tasks, deps, n_left, [], [])
@@ -236,17 +235,17 @@ defmodule Planner do
   defp take_independent([t | ts], deps, nworkers, task_floor, rechazados) do
     cond do
       Enum.any?(rechazados, fn a -> t in Map.get(deps, a, []) or a in Map.get(deps, t, []) end) ->
-        # Pasamos de añadir nils innecesario la lista son de tamaño maximo num_workers
+        # We avoid adding unnecessary nils, the lists are of maximum size num_workers
         {taken, remaining} = take_independent(ts, deps, nworkers - 1, task_floor, rechazados)
-        # Selecciona otro y postpone esta tarea
+        # Select another and postpone this task
         {taken, [t | remaining]}
 
       Enum.any?(task_floor, fn a -> t in Map.get(deps, a, []) or a in Map.get(deps, t, []) end) ->
-        # Pasamos de añadir nils innecesario la lista son de tamaño maximo num_workers
+        # We avoid adding unnecessary nils, the lists are of maximum size num_workers
         {taken, remaining} =
           take_independent(ts, deps, nworkers - 1, task_floor, [t | rechazados])
 
-        # Selecciona otro y postpone esta tarea
+        # Select another and postpone this task
         {taken, [t | remaining]}
 
       true ->

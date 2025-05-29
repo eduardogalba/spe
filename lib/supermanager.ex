@@ -81,7 +81,7 @@ defmodule SuperManager do
         restart: :transient
       }
 
-    Logger.debug("[SuperManager #{inspect(self())}]: Iniciando SuperJob...")
+    Logger.debug("[SuperManager #{inspect(self())}]: Starting SuperJob...")
     Supervisor.start_child(SPE.SuperManager, superjob)
   end
 end
