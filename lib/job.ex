@@ -6,22 +6,11 @@ defmodule Job do
   It uses a GenServer to maintain the state and handle asynchronous
   messages related to task execution and worker readiness.
 
-  #Functions:
-  - `start_link/1`: Starts the job with the initial state.
-  - `init/1`: Initializes the job state and starts the GenServer.
-  - `handle_cast/2`: Handles asynchronous messages for worker readiness and task completion.
-  - `handle_info/2`: Handles informational messages, such as worker notifications.
-  - `task_completed/2`: Notifies the job that a task has been completed.
-  - `worker_ready/2`: Notifies the job that a worker is ready to take tasks.
-  - `should_we_finish?/1`: Checks if all tasks are completed and decides whether to finish the job.
-  - `dispatch_tasks/1`: Dispatches tasks to available workers based on the current plan.
-
-  #Usage:
+  ## Usage:
   To use this module, you would typically start a job with `Job.start_link/1` and then
   send tasks to it using `Job.task_completed/2` and `Job.worker_ready/2`.
   It is designed to work with a distributed system where tasks can be executed by multiple workers,
   and it handles the complexities of task dependencies and worker availability.
-  #Example:
   ```elixir
   {:ok, job_pid} = Job.start_link(%{id: "job_1", tasks: %{"task_1" => %{"exec" => "some_exec", "timeout" => 5000}}})
   Job.worker_ready(job_pid, self())
@@ -36,11 +25,11 @@ defmodule Job do
   This function sets up the initial state of the job, including
   the task returns, ongoing tasks, free workers, results, and the start time.
   It also logs the start of the job for debugging purposes.
-  # Parameters:
+  #### Parameters:
   - `state`: The initial state of the job, which includes the job ID and tasks to be executed.
-  # Returns:
+  #### Returns:
   - `{:ok, state}`: Returns the initial state of the job wrapped in an `:ok` tuple.
-  # Example:
+  #### Example:
   ```elixir
   {:ok, initial_state} = Job.init(%{id: "job_1", tasks: %{"task_1" => %{"exec" => "some_exec", "timeout" => 5000}}})
   ```
@@ -54,7 +43,7 @@ defmodule Job do
   Starts the job with the given initial state.
   This function initializes the job by setting up the necessary state
   and prepares it to handle tasks and workers. It also logs the start of the
-  # Parameters:
+  #### Parameters:
   - `state`: The initial state of the job, which includes the job ID and tasks to be executed.   Returns::
   - `{:ok, pid}`: Returns the PID of the started job process wrapped in an `:ok` tuple.
     mple:
@@ -86,13 +75,13 @@ defmodule Job do
   This function processes messages sent to the job, such as when a worker is ready
   to take tasks or when a task has been completed by a worker. It updates the job state
   accordingly and checks if the job should finish based on the current state.
-  # Parameters:
+  #### Parameters:
   - `message`: The message to be processed, which can be either a worker readiness notification
     or a task completion notification.
   - `state`: The current state of the job, which includes ongoing tasks, free workers, and results.
-  # Returns:
+  #### Returns:
   - `{:noreply, new_state}`: Returns the updated state of the job wrapped in a `:noreply` tuple.
-  # Example:
+  #### Example:
   ```elixir
   GenServer.cast(job_pid, {:worker_ready, worker_pid})
   GenServer.cast(job_pid, {:task_terminated, {task_name, {:result, value}, worker_pid}})
@@ -228,12 +217,12 @@ defmodule Job do
   This function processes messages sent to the job when a worker is ready
   to take tasks. It updates the job state by adding the worker to the list of
   free workers and logs the addition of the new worker.
-  # Parameters:
+  #### Parameters:
   - `message`: The informational message containing the worker PID.
   - `state`: The current state of the job, which includes ongoing tasks, free workers, and results.
-  # Returns:
+  #### Returns:
   - `{:noreply, state}`: Returns the current state of the job wrapped in a `:noreply` tuple.
-  # Example:
+  #### Example:
   ```elixir
   GenServer.handle_info({:notify_ready, worker_pid}, state)
   ```
@@ -272,12 +261,12 @@ defmodule Job do
   It sends a message to the job process indicating that the task has been completed,
   along with the task name, result, and worker PID. The job process will then
   handle this message to update its state accordingly.
-  # Parameters:
+  #### Parameters:
   - `job_id`: The ID of the job process that is handling the task.
   - `task_name`: The name of the task that has been completed.
   - `result`: The result of the task execution, which can be a success or failure.
   - `worker_pid`: The PID of the worker that completed the task.
-  # Example:
+  #### Example:
   ```elixir
   Job.task_completed(job_id, {"task_1", {:result, "task_result"}, worker_pid})
   ```
@@ -291,10 +280,10 @@ defmodule Job do
   This function is called when a worker signals that it is ready to receive tasks.
   It sends a message to the job process indicating that the worker is ready,
   allowing the job to assign tasks to the worker as they become available.
-  # Parameters:
+  #### Parameters:
   - `job_pid`: The PID of the job process that is managing the workers.
   - `worker_pid`: The PID of the worker that is ready to take tasks.
-  # Example:
+  #### Example:
   ```elixir
   Job.worker_ready(job_pid, worker_pid)
   ```
