@@ -36,10 +36,9 @@ defmodule JobManager do
                   end
               end)
 
-            # Si no hay num_workers definido optamos por el nivel
-            # de concurrencia que pueda necesitar mas workers
-            # Cambio de estrategia crear un proceso es costoso y tarda bastante
-            # Si este maximo es menor que el propuesto por el usuario, se ignora
+            # If num_workers is not defined, we choose the concurrency level that may need more workers.
+            # Changing strategy: creating a process is expensive and takes time.
+            # If this maximum is less than the one proposed by the user, it is ignored.
             maximum_concurrent_tasks = new_plan |> Enum.map(&length/1) |> Enum.max()
             num_workers =
               if state[:num_workers] == :unbound or maximum_concurrent_tasks < state[:num_workers] do
@@ -51,7 +50,7 @@ defmodule JobManager do
             Logger.debug("[JobManager #{inspect(self())}]: For Job #{inspect(job_id)} will run maximum #{inspect(num_workers)} tasks.")
             Logger.debug("[JobManager #{inspect(self())}]: For Job #{inspect(job_id)} the plan is #{inspect(new_plan)}")
 
-            Logger.debug("[JobManager #{inspect(self())}]: Tengo en enables #{inspect(enables)}")
+            Logger.debug("[JobManager #{inspect(self())}]: Enables contains #{inspect(enables)}")
 
             new_job = %{id: job_id, plan: new_plan, enables: enables, num_workers: num_workers, tasks: tasks, name: job_desc["name"]}
 
@@ -66,10 +65,9 @@ defmodule JobManager do
         end
 
       {:ok, job} ->
-        Logger.info("Recuperando trabajo después de que el servidor cayera")
-        # Aqui necesita recuperar lo guardado pero reajustar la planificacion
-        # porque puede que existan tareas que no hubiesen llegado a completarse
-        # y ya no formaran parte del plan
+        Logger.info("Recovering job after server crash")
+        # Here it needs to recover what was saved but adjust the plan
+        # because there may be tasks that were not completed and will no longer be part of the plan
         completed_tasks = Map.keys(job.results)
         task_desc = Map.drop(job.tasks, completed_tasks)
 
@@ -77,7 +75,7 @@ defmodule JobManager do
 
         case plan do
           {:ok, new_plan} ->
-            Logger.info("Se calcula un nuevo plan de recuperacion #{inspect(new_plan)}")
+            Logger.info("A new recovery plan is calculated #{inspect(new_plan)}")
             maximum_concurrent_tasks = new_plan |> Enum.map(&length/1) |> Enum.max()
             num_workers =
               if state[:num_workers] == :unbound or maximum_concurrent_tasks < state[:num_workers] do
@@ -116,13 +114,8 @@ defmodule JobManager do
 
   def handle_call({:start, job_id}, _from, state) do
     if !Map.has_key?(state[:jobs], job_id) do
-      {:reply, {:error, :unregistered_job}, state} ## OJO! No para aqui
+      {:reply, {:error, :unregistered_job}, state}
     else
-
-      # Pensandolo bien el JobManager no creo que necesita saber mas la informacion
-      # del job, simplemente su pid si este se cae
-      # OJO! Aqui se podria comprobar la longitud maxima de las sublistas
-      # y si num_workers es unbound se establece esa longitud como num_workers
       job = state[:jobs][job_id]
       case SuperManager.start_job(job, job[:num_workers]) do
         {:ok, _} -> {:reply, {:ok, job_id}, state}
@@ -132,7 +125,7 @@ defmodule JobManager do
   end
 
   def handle_info(msg, state) do
-    Logger.debug("Info generico")
+    Logger.debug("Generic info")
     Logger.debug("#{inspect(msg)}")
     {:noreply, state}
   end

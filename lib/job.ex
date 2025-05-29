@@ -8,24 +8,24 @@ defmodule Job do
   end
 
   def start_link(state) do
-    Logger.debug("Iniciando trabajo...")
+    Logger.debug("Starting job...")
 
     new_state =
       state
-      |> Map.put(:returns, Map.get(state, :returns, %{})) # Esto tambien sirve para los argumentos de las tareas
+      |> Map.put(:returns, Map.get(state, :returns, %{})) # This also works for task arguments
       |> Map.put(:ongoing_tasks, [])
       |> Map.put(:free_workers, [])
       |> Map.put(:results, Map.get(state, :results, %{}))
-      |> Map.put(:time_start, :erlang.monotonic_time(:millisecond)) # Empieza el cronometro
+      |> Map.put(:time_start, :erlang.monotonic_time(:millisecond)) # Start the timer
       |> Map.put(:busy_workers, %{})
 
     GenServer.start_link(__MODULE__, new_state, [])
   end
 
   def handle_cast({:worker_ready, worker_pid}, state) do
-    Logger.debug("[Job #{inspect(self())}]: Nuevo worker #{inspect(worker_pid)}...")
+    Logger.debug("[Job #{inspect(self())}]: New worker #{inspect(worker_pid)}...")
     free_workers = state[:free_workers] ++ [worker_pid]
-    # Si se cae, me llegara una notificacion
+    # If it crashes, I will get a notification
     Process.monitor(worker_pid)
     Worker.are_u_ready?(worker_pid)
     new_state =
@@ -38,7 +38,6 @@ defmodule Job do
   def handle_cast({:task_terminated, {task_name, {:result, value}, worker_pid}}, state) do
     Logger.debug("[Job #{inspect(self())}]: Handling task #{inspect(task_name)} ending...")
     new_ongoing_tasks = List.delete(state[:ongoing_tasks], task_name)
-    #Logger.debug("[Job #{inspect(self())}]: These are the tasks stil running => #{inspect(new_ongoing_tasks)}")
     Logger.debug("[Job #{inspect(self())}]: Task Name: #{inspect(task_name)} Result: #{inspect(value)}")
     new_returns =
       state[:returns]
@@ -57,7 +56,6 @@ defmodule Job do
       |> Map.put(:busy_workers, Map.delete(state[:busy_workers], worker_pid))
 
     if new_ongoing_tasks == [] and Map.keys(state[:tasks]) do
-      #Logger.debug("[Job #{inspect(self())}]: Next plan floor = > #{inspect(state[:plan])}")
       should_we_finish?(new_state)
     else
       {:noreply, new_state}
@@ -78,8 +76,8 @@ defmodule Job do
         {:fallen_worker, _pid} -> []
         pid -> [pid]
       end
-    Logger.debug("[Job #{inspect(self())}]: Que falta por hacer #{inspect(new_ongoing_tasks)}...")
-    Logger.debug("[Job #{inspect(self())}]: Tareas a deshabilitar #{inspect(disable_tasks)}...")
+    Logger.debug("[Job #{inspect(self())}]: Remaining tasks to do #{inspect(new_ongoing_tasks)}...")
+    Logger.debug("[Job #{inspect(self())}]: Tasks to disable #{inspect(disable_tasks)}...")
 
     Logger.debug("[Job #{inspect(self())}]: Results => #{inspect(state[:results])}")
     Logger.debug("[Job #{inspect(self())}]: Returns => #{inspect(state[:returns])}")
@@ -111,7 +109,7 @@ defmodule Job do
           new_plan
           |> Enum.filter(fn sublist -> !Enum.empty?(sublist) end)
 
-        Logger.debug("Nuevo plan: #{inspect(new_plan_cleaned)}")
+        Logger.debug("New plan: #{inspect(new_plan_cleaned)}")
 
         new_returns =
           Enum.reduce(disable_tasks, state[:returns],
@@ -127,8 +125,8 @@ defmodule Job do
             end)
           |> Map.put(task_name, {:failed, reason})
 
-        Logger.debug("Tareas hechas #{inspect(new_returns)}")
-        # Actualiza el estado con los nuevos valores
+        Logger.debug("Tasks done #{inspect(new_returns)}")
+        # Update state with new values
 
         state
         |> Map.put(:returns, new_returns)
@@ -215,7 +213,7 @@ defmodule Job do
         end
 
       new_state ->
-        Logger.debug("[Job #{inspect(self())}]: Job is not finished yet. Conitnuing..")
+        Logger.debug("[Job #{inspect(self())}]: Job is not finished yet. Continuing..")
         JobRepository.save_job_state(state)
         {:noreply, new_state}
     end
@@ -233,14 +231,14 @@ defmodule Job do
         free_workers = state[:free_workers]
         {to_assign, remaining_tasks} = Enum.split(first_tasks, length(free_workers))
 
-        Logger.debug("[Job #{inspect(self())}]: The are these workers #{inspect(free_workers)} available")
+        Logger.debug("[Job #{inspect(self())}]: These workers are available #{inspect(free_workers)}")
         busy_workers =
           Enum.zip(to_assign, free_workers)
           |> Enum.reduce(%{}, fn {task_name, worker_pid}, acc ->
             Map.put(acc, worker_pid, task_name)
           end)
 
-        # Empareja tareas y workers
+        # Pair tasks and workers
         Enum.zip(to_assign, free_workers)
         |> Enum.each(fn {task_name, worker_pid} ->
           Logger.debug("[Job #{inspect(self())}]: Assigning task #{inspect(task_name)} to worker #{inspect(worker_pid)}")
@@ -256,10 +254,8 @@ defmodule Job do
         Logger.debug("[Job #{inspect(self())}]: Starting tasks #{inspect(to_assign)}")
 
 
-        # Los workers que quedan libres después de asignar
         new_free_workers = Enum.drop(free_workers, length(to_assign))
 
-        # Construye el nuevo plan: si quedan tareas sin asignar, las dejas al principio
         new_plan =
           if remaining_tasks == [] do
             next_tasks

@@ -3,7 +3,7 @@ defmodule SPE do
   require Logger
 
   def init({opts, state}) do
-    # TODO: opts contiene num_workers pasar a JobManager
+    # TODO: opts contains num_workers, pass to JobManager
     pubsub = Phoenix.PubSub.child_spec(name: SPE.PubSub)
 
     super_manager = %{
@@ -84,7 +84,7 @@ defmodule SPE do
   end
 
   def handle_info(msg, state) do
-    Logger.debug("Info generico")
+    Logger.debug("Generic info")
     Logger.debug("#{inspect(msg)}")
     {:noreply, state}
   end
