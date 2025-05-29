@@ -49,30 +49,9 @@ defmodule SPE do
   ```
   """
   def init({opts, state}) do
-    # TODO: opts contiene num_workers pasar a JobManager
-    pubsub = Phoenix.PubSub.child_spec(name: SPE.PubSub)
-
-    super_manager = %{
-      id: :super_manager,
-      start: {SuperManager, :start_link, []}
-    }
-
-    manager_opts = Keyword.put(opts, :name, SPE.JobManager)
-
-    manager = %{
-      id: :manager,
-      start: {JobManager, :start_link, [manager_opts]}
-    }
-
-    children = [
-      pubsub,
-      super_manager,
-      manager
-    ]
-
     Logger.info("[SPE #{inspect(self())}]: Server starting...")
 
-    case Supervisor.start_link(children, strategy: :one_for_one) do
+    case SuperSPE.start_link(opts) do
       {:ok, supv} ->
         ref = Process.monitor(supv)
         {:ok, Map.put(state, :supv, %{ref: ref, pid: supv})}
@@ -81,12 +60,11 @@ defmodule SPE do
         Logger.error("[SPE #{inspect(self())}]: Server is already started.")
         error
 
-      {:error, {:shutdown, reason}} ->
+      {:error, {:shutdown, reason}} = error ->
         Logger.error(
           "[SPE #{inspect(self())}]: One of the child processes is crashing caused by #{inspect(reason)}"
         )
-
-        reason
+        error
     end
   end
 
