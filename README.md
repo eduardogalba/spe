@@ -54,25 +54,18 @@ Or programmatically:
 
 A job is a map like:
 ```elixir
-job = %{
-  "name" => "example",
-  "tasks" => [
-    %{"name" => "t1", "exec" => fn -> ... end},
-    %{"name" => "t2", "exec" => fn -> ... end, "enables" => {"t1"}}
-  ]
-}
-SPE.submit_job(job)
+job = %{"name" => "nisse", "tasks" => [%{"name" => "t0", "enables" => [], "exec" => fn _ -> 1 + 2 end, "timeout" => :infinity}]}
+
+id = case SPE.submit_job(job) do
+  {:ok, job_id} -> job_id
+  {:error, desc} -> desc
+end
 ```
 
-## Development Roadmap
-
-- **Job Lifecycle**: Full management of in-progress, completed, and failed tasks.
-- **Task Execution**: Concurrency, worker pool management, and result collection.
-- **Robust Error Handling**: Timeouts, crash isolation, dependency-aware skips.
-- **PubSub Events**: Real-time job/task status notifications.
-- **Testing**: ExUnit-based test suite for APIs and behaviors.
-
-For detailed planning, see [`docs/backlog.md`](docs/backlog.md).
+### Starting a Job
+```elixir
+SPE.start_job(job_id)
+```
 
 ## Logging
 
