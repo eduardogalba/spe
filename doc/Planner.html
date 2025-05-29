@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.38.2">
+    <meta name="project" content="spe v1.0.0">
+
+
+    <title>Planner — spe v1.0.0</title>
+
+    <link rel="stylesheet" href="dist/html-elixir-KV3YOVJ3.css" />
+
+    <script defer src="dist/sidebar_items-A0985B5F.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-DPJLHKSM.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="api-reference.html" class="sidebar-projectName" translate="no">
+spe
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v1.0.0
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras=""></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-module" id="main" data-type="modules">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of spe</span>
+            <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <button type="submit" class="search-button" aria-label="Submit Search" tabindex="-1">
+            <i class="ri-search-2-line ri-lg" aria-hidden="true"></i>
+          </button>
+          <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+            <i class="ri-close-line ri-lg" title="Cancel search"></i>
+          </button>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>
+      <span translate="no">Planner</span> 
+      <small class="app-vsn" translate="no">(spe v1.0.0)</small>
+
+    </h1>
+
+  </div>
+
+
+    <section id="moduledoc">
+<p><strong>Planner</strong> is responsible for planning jobs based on their descriptions and the number of workers available.
+It implements Kahn's algorithm to create a plan for executing tasks while respecting their dependencies.</p><h2 id="module-usage" class="section-heading"><a href="#module-usage" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Usage:</span></h2><ul><li>Call <a href="#planning/2"><code class="inline">Planner.planning/2</code></a> with a job description and the number of workers to get a planned execution order.</li></ul><h2 id="module-example" class="section-heading"><a href="#module-example" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Example:</span></h2><pre><code class="makeup elixir" translate="no"><span class="n">job_desc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="1887600319-1">%{</span><span class="w">
+  </span><span class="s">&quot;tasks&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="1887600319-2">[</span><span class="w">
+    </span><span class="p" data-group-id="1887600319-3">%{</span><span class="s">&quot;name&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;enables&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="1887600319-4">[</span><span class="s">&quot;task2&quot;</span><span class="p" data-group-id="1887600319-4">]</span><span class="p" data-group-id="1887600319-3">}</span><span class="p">,</span><span class="w">
+    </span><span class="p" data-group-id="1887600319-5">%{</span><span class="s">&quot;name&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;enables&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="1887600319-6">[</span><span class="p" data-group-id="1887600319-6">]</span><span class="p" data-group-id="1887600319-5">}</span><span class="w">
+  </span><span class="p" data-group-id="1887600319-2">]</span><span class="p">,</span><span class="w">
+  </span><span class="s">&quot;priority&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="1887600319-7">[</span><span class="s">&quot;task1&quot;</span><span class="p" data-group-id="1887600319-7">]</span><span class="w">
+</span><span class="p" data-group-id="1887600319-1">}</span><span class="w">
+</span><span class="p" data-group-id="1887600319-8">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">plan</span><span class="p" data-group-id="1887600319-8">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Planner</span><span class="o">.</span><span class="n">planning</span><span class="p" data-group-id="1887600319-9">(</span><span class="n">job_desc</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p" data-group-id="1887600319-9">)</span></code></pre><h2 id="module-notes" class="section-heading"><a href="#module-notes" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Notes:</span></h2><ul><li>The job description should contain a list of tasks, each with a name and a list of tasks it enables.</li><li>The <a href="#planning/2"><code class="inline">planning/2</code></a> function will return an ordered list of task groups that can be executed in parallel, respecting their dependencies.</li><li>If the job description contains a &quot;priority&quot; field, it will be used to prioritize tasks in the planning.</li></ul>
+    </section>
+
+</div>
+
+  <section id="summary" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#summary">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Summary</span>
+    </h1>
+<div class="summary-functions summary">
+  <h2>
+    <a href="#functions">Functions</a>
+  </h2>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#find_dependent_tasks/2" data-no-tooltip="" translate="no">find_dependent_tasks(enables, start_task)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Finds all tasks that depend on a given start task, including transitive dependencies.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#find_next_independent/3" data-no-tooltip="" translate="no">find_next_independent(list, deps, done)</a>
+
+      </div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#find_next_independent/4" data-no-tooltip="" translate="no">find_next_independent(list, deps, undone, done)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Finds the next independent task from a list of tasks, given their dependencies and the already completed tasks.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#group_tasks/3" data-no-tooltip="" translate="no">group_tasks(tasks, deps, num_workers)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Groups tasks into independent sets, considering task dependencies and worker limits.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#group_tasks_with_priority/4" data-no-tooltip="" translate="no">group_tasks_with_priority(tasks, deps, num_workers, priority)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Groups tasks into independent sets, considering task dependencies and worker limits.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#khan_loop/3" data-no-tooltip="" translate="no">khan_loop(dependencies, free_tasks, planned)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Implements Kahn's algorithm to find a topological ordering of tasks based on their dependencies.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#planning/2" data-no-tooltip="" translate="no">planning(job_desc, num_workers)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Plans a job based on its description and the number of workers available.
+It uses Kahn's algorithm to create a plan for executing tasks while respecting their dependencies.</p></div>
+
+    </div>
+
+</div>
+
+  </section>
+
+
+  <section id="functions" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#functions">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Functions</span>
+    </h1>
+    <div class="functions-list">
+<section class="detail" id="find_dependent_tasks/2">
+
+  <div class="detail-header">
+    <a href="#find_dependent_tasks/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">find_dependent_tasks(enables, start_task)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Finds all tasks that depend on a given start task, including transitive dependencies.</p><h4>Parameters:</h4><ul><li><code class="inline">enables</code>: A map where keys are task names and values are lists of tasks that the key task enables.</li><li><code class="inline">start_task</code>: The task from which to start finding dependent tasks.</li></ul><h4>Returns:</h4><ul><li>A list of all tasks that depend on the <code class="inline">start_task</code>, including transitive dependencies.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="n">enables</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="5001586681-1">%{</span><span class="w">
+  </span><span class="s">&quot;task1&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="5001586681-2">[</span><span class="s">&quot;task2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task3&quot;</span><span class="p" data-group-id="5001586681-2">]</span><span class="p">,</span><span class="w">
+  </span><span class="s">&quot;task2&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="5001586681-3">[</span><span class="s">&quot;task4&quot;</span><span class="p" data-group-id="5001586681-3">]</span><span class="p">,</span><span class="w">
+  </span><span class="s">&quot;task3&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="5001586681-4">[</span><span class="p" data-group-id="5001586681-4">]</span><span class="p">,</span><span class="w">
+  </span><span class="s">&quot;task4&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="5001586681-5">[</span><span class="p" data-group-id="5001586681-5">]</span><span class="w">
+</span><span class="p" data-group-id="5001586681-1">}</span><span class="w">
+</span><span class="n">start_task</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;task1&quot;</span><span class="w">
+</span><span class="n">dependent_tasks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Planner</span><span class="o">.</span><span class="n">find_dependent_tasks</span><span class="p" data-group-id="5001586681-6">(</span><span class="n">enables</span><span class="p">,</span><span class="w"> </span><span class="n">start_task</span><span class="p" data-group-id="5001586681-6">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="find_next_independent/3">
+
+  <div class="detail-header">
+    <a href="#find_next_independent/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">find_next_independent(list, deps, done)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+
+  </section>
+</section>
+<section class="detail" id="find_next_independent/4">
+
+  <div class="detail-header">
+    <a href="#find_next_independent/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">find_next_independent(list, deps, undone, done)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Finds the next independent task from a list of tasks, given their dependencies and the already completed tasks.</p><h4>Parameters:</h4><ul><li><code class="inline">tasks</code>: A list of tasks to check for independence.</li><li><code class="inline">deps</code>: A map where keys are task names and values are lists of dependencies for each task.</li><li><code class="inline">undone</code>: A list of tasks that are yet to be completed.</li><li><code class="inline">done</code>: A list of tasks that have already been completed.</li></ul><h4>Returns:</h4><ul><li>The first independent task found in the list, or <code class="inline">nil</code> if no independent task is found.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="n">tasks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="0280317693-1">[</span><span class="s">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task3&quot;</span><span class="p" data-group-id="0280317693-1">]</span><span class="w">
+</span><span class="n">deps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="0280317693-2">%{</span><span class="s">&quot;task1&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="0280317693-3">[</span><span class="p" data-group-id="0280317693-3">]</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="0280317693-4">[</span><span class="s">&quot;task1&quot;</span><span class="p" data-group-id="0280317693-4">]</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task3&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="0280317693-5">[</span><span class="s">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="p" data-group-id="0280317693-5">]</span><span class="p" data-group-id="0280317693-2">}</span><span class="w">
+</span><span class="n">undone</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="0280317693-6">[</span><span class="s">&quot;task2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task3&quot;</span><span class="p" data-group-id="0280317693-6">]</span><span class="w">
+</span><span class="n">done</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="0280317693-7">[</span><span class="s">&quot;task1&quot;</span><span class="p" data-group-id="0280317693-7">]</span><span class="w">
+</span><span class="n">next_task</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Planner</span><span class="o">.</span><span class="n">find_next_independent</span><span class="p" data-group-id="0280317693-8">(</span><span class="n">tasks</span><span class="p">,</span><span class="w"> </span><span class="n">deps</span><span class="p">,</span><span class="w"> </span><span class="n">undone</span><span class="p">,</span><span class="w"> </span><span class="n">done</span><span class="p" data-group-id="0280317693-8">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="group_tasks/3">
+
+  <div class="detail-header">
+    <a href="#group_tasks/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">group_tasks(tasks, deps, num_workers)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Groups tasks into independent sets, considering task dependencies and worker limits.</p><h4>Parameters:</h4><ul><li><code class="inline">tasks</code>: A list of tasks to be grouped.</li><li><code class="inline">deps</code>: A map where keys are task names and values are lists of dependencies for each task.</li><li><code class="inline">num_workers</code>: The maximum number of workers available for executing tasks. If <code class="inline">:unbound</code>, it allows dynamic allocation.</li></ul><h4>Returns:</h4><ul><li>A list of lists, where each inner list contains tasks that can be executed in parallel, respecting their dependencies.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="n">tasks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="7545403650-1">[</span><span class="s">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task3&quot;</span><span class="p" data-group-id="7545403650-1">]</span><span class="w">
+</span><span class="n">deps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="7545403650-2">%{</span><span class="s">&quot;task1&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="7545403650-3">[</span><span class="p" data-group-id="7545403650-3">]</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="7545403650-4">[</span><span class="s">&quot;task1&quot;</span><span class="p" data-group-id="7545403650-4">]</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task3&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="7545403650-5">[</span><span class="s">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="p" data-group-id="7545403650-5">]</span><span class="p" data-group-id="7545403650-2">}</span><span class="w">
+</span><span class="n">num_workers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="w">
+</span><span class="n">grouped_tasks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Planner</span><span class="o">.</span><span class="n">group_tasks</span><span class="p" data-group-id="7545403650-6">(</span><span class="n">tasks</span><span class="p">,</span><span class="w"> </span><span class="n">deps</span><span class="p">,</span><span class="w"> </span><span class="n">num_workers</span><span class="p" data-group-id="7545403650-6">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="group_tasks_with_priority/4">
+
+  <div class="detail-header">
+    <a href="#group_tasks_with_priority/4" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">group_tasks_with_priority(tasks, deps, num_workers, priority)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Groups tasks into independent sets, considering task dependencies and worker limits.</p><h4>Parameters:</h4><ul><li><code class="inline">tasks</code>: A list of tasks to be grouped.</li><li><code class="inline">deps</code>: A map where keys are task names and values are lists of dependencies for each task.</li><li><code class="inline">num_workers</code>: The maximum number of workers available for executing tasks. If <code class="inline">:unbound</code>, it allows dynamic allocation.</li><li><code class="inline">priority</code>: A list of tasks that should be prioritized in the grouping.</li></ul><h4>Returns:</h4><ul><li>A list of lists, where each inner list contains tasks that can be executed in parallel, respecting their dependencies and priorities.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="n">tasks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="4244662945-1">[</span><span class="s">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task3&quot;</span><span class="p" data-group-id="4244662945-1">]</span><span class="w">
+</span><span class="n">deps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="4244662945-2">%{</span><span class="s">&quot;task1&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="4244662945-3">[</span><span class="p" data-group-id="4244662945-3">]</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="4244662945-4">[</span><span class="s">&quot;task1&quot;</span><span class="p" data-group-id="4244662945-4">]</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task3&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="4244662945-5">[</span><span class="s">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="p" data-group-id="4244662945-5">]</span><span class="p" data-group-id="4244662945-2">}</span><span class="w">
+</span><span class="n">num_workers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="w">
+</span><span class="n">priority</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="4244662945-6">[</span><span class="s">&quot;task1&quot;</span><span class="p" data-group-id="4244662945-6">]</span><span class="w">
+</span><span class="n">grouped_tasks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Planner</span><span class="o">.</span><span class="n">group_tasks_with_priority</span><span class="p" data-group-id="4244662945-7">(</span><span class="n">tasks</span><span class="p">,</span><span class="w"> </span><span class="n">deps</span><span class="p">,</span><span class="w"> </span><span class="n">num_workers</span><span class="p">,</span><span class="w"> </span><span class="n">priority</span><span class="p" data-group-id="4244662945-7">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="khan_loop/3">
+
+  <div class="detail-header">
+    <a href="#khan_loop/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">khan_loop(dependencies, free_tasks, planned)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Implements Kahn's algorithm to find a topological ordering of tasks based on their dependencies.</p><h4>Parameters:</h4><ul><li><code class="inline">dependencies</code>: A map where keys are task names and values are lists of tasks that depend on the key task.</li><li><code class="inline">free_tasks</code>: A list of tasks that have no dependencies and can be executed immediately.</li><li><code class="inline">planned</code>: A list that accumulates the planned tasks in the order they can be executed.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:ok, planned}</code>: If a valid topological ordering is found, returning the ordered list of tasks.</li><li><code class="inline">{:error, :graph_has_cycle}</code>: If a cycle is detected in the task dependencies, making it impossible to create a valid ordering.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="n">dependencies</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="6122831013-1">%{</span><span class="w">
+  </span><span class="s">&quot;task1&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="6122831013-2">[</span><span class="s">&quot;task2&quot;</span><span class="p" data-group-id="6122831013-2">]</span><span class="p">,</span><span class="w">
+  </span><span class="s">&quot;task2&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="6122831013-3">[</span><span class="p" data-group-id="6122831013-3">]</span><span class="p">,</span><span class="w">
+  </span><span class="s">&quot;task3&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="6122831013-4">[</span><span class="s">&quot;task1&quot;</span><span class="p" data-group-id="6122831013-4">]</span><span class="w">
+</span><span class="p" data-group-id="6122831013-1">}</span><span class="w">
+</span><span class="n">free_tasks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="6122831013-5">[</span><span class="s">&quot;task2&quot;</span><span class="p" data-group-id="6122831013-5">]</span><span class="w">
+</span><span class="n">planned</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="6122831013-6">[</span><span class="p" data-group-id="6122831013-6">]</span><span class="w">
+</span><span class="p" data-group-id="6122831013-7">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">ordered_tasks</span><span class="p" data-group-id="6122831013-7">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Planner</span><span class="o">.</span><span class="n">khan_loop</span><span class="p" data-group-id="6122831013-8">(</span><span class="n">dependencies</span><span class="p">,</span><span class="w"> </span><span class="n">free_tasks</span><span class="p">,</span><span class="w"> </span><span class="n">planned</span><span class="p" data-group-id="6122831013-8">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="planning/2">
+
+  <div class="detail-header">
+    <a href="#planning/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">planning(job_desc, num_workers)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Plans a job based on its description and the number of workers available.
+It uses Kahn's algorithm to create a plan for executing tasks while respecting their dependencies.</p><h4>Parameters:</h4><ul><li><code class="inline">job_desc</code>: A map containing the job description, including tasks and their dependencies.</li><li><code class="inline">num_workers</code>: The number of workers available for executing the tasks. It can be an integer or <code class="inline">:unbound</code> for dynamic allocation.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:ok, plan}</code>: A list of task groups that can be executed in parallel, respecting their dependencies.</li><li><code class="inline">{:error, reason}</code>: If the job description is invalid or if there is a cycle in the task dependencies.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="n">job_desc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="1489004931-1">%{</span><span class="w">
+  </span><span class="s">&quot;tasks&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="1489004931-2">[</span><span class="w">
+    </span><span class="p" data-group-id="1489004931-3">%{</span><span class="s">&quot;name&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;enables&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="1489004931-4">[</span><span class="s">&quot;task2&quot;</span><span class="p" data-group-id="1489004931-4">]</span><span class="p" data-group-id="1489004931-3">}</span><span class="p">,</span><span class="w">
+    </span><span class="p" data-group-id="1489004931-5">%{</span><span class="s">&quot;name&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;enables&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="1489004931-6">[</span><span class="p" data-group-id="1489004931-6">]</span><span class="p" data-group-id="1489004931-5">}</span><span class="w">
+  </span><span class="p" data-group-id="1489004931-2">]</span><span class="p">,</span><span class="w">
+  </span><span class="s">&quot;priority&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="1489004931-7">[</span><span class="s">&quot;task1&quot;</span><span class="p" data-group-id="1489004931-7">]</span><span class="w">
+</span><span class="p" data-group-id="1489004931-1">}</span><span class="w">
+</span><span class="p" data-group-id="1489004931-8">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">plan</span><span class="p" data-group-id="1489004931-8">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Planner</span><span class="o">.</span><span class="n">planning</span><span class="p" data-group-id="1489004931-9">(</span><span class="n">job_desc</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p" data-group-id="1489004931-9">)</span></code></pre>
+  </section>
+</section>
+
+    </div>
+  </section>
+
+    <footer class="footer">
+      <p>
+
+        <span class="line">
+          <button class="a-main footer-button display-quick-switch" title="Search HexDocs packages">
+            Search HexDocs
+          </button>
+
+            <a href="spe.epub" title="ePub version">
+              Download ePub version
+            </a>
+
+        </span>
+      </p>
+
+      <p class="built-using">
+        Built using
+        <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.38.2) for the
+
+          <a href="https://elixir-lang.org" title="Elixir" target="_blank" translate="no">Elixir programming language</a>
+
+      </p>
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.38.2">
+    <meta name="project" content="spe v1.0.0">
+
+
+    <title>Job — spe v1.0.0</title>
+
+    <link rel="stylesheet" href="dist/html-elixir-KV3YOVJ3.css" />
+
+    <script defer src="dist/sidebar_items-A0985B5F.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-DPJLHKSM.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="api-reference.html" class="sidebar-projectName" translate="no">
+spe
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v1.0.0
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras=""></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-module" id="main" data-type="modules">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of spe</span>
+            <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <button type="submit" class="search-button" aria-label="Submit Search" tabindex="-1">
+            <i class="ri-search-2-line ri-lg" aria-hidden="true"></i>
+          </button>
+          <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+            <i class="ri-close-line ri-lg" title="Cancel search"></i>
+          </button>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>
+      <span translate="no">Job</span> 
+      <small class="app-vsn" translate="no">(spe v1.0.0)</small>
+
+    </h1>
+
+  </div>
+
+
+    <section id="moduledoc">
+<p><strong>Job</strong> module is responsible for managing the execution of tasks
+in a distributed system. It handles task assignment to workers,
+monitors their completion, and manages the overall state of the job.
+It uses a GenServer to maintain the state and handle asynchronous
+messages related to task execution and worker readiness.</p><h2 id="module-usage" class="section-heading"><a href="#module-usage" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Usage:</span></h2><p>To use this module, you would typically start a job with <a href="#start_link/1"><code class="inline">Job.start_link/1</code></a> and then
+send tasks to it using <a href="#task_completed/2"><code class="inline">Job.task_completed/2</code></a> and <a href="#worker_ready/2"><code class="inline">Job.worker_ready/2</code></a>.
+It is designed to work with a distributed system where tasks can be executed by multiple workers,
+and it handles the complexities of task dependencies and worker availability.</p><pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="9098050295-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">job_pid</span><span class="p" data-group-id="9098050295-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Job</span><span class="o">.</span><span class="n">start_link</span><span class="p" data-group-id="9098050295-2">(</span><span class="p" data-group-id="9098050295-3">%{</span><span class="ss">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;job_1&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">tasks</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="9098050295-4">%{</span><span class="s">&quot;task_1&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="9098050295-5">%{</span><span class="s">&quot;exec&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;some_exec&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;timeout&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mi">5000</span><span class="p" data-group-id="9098050295-5">}</span><span class="p" data-group-id="9098050295-4">}</span><span class="p" data-group-id="9098050295-3">}</span><span class="p" data-group-id="9098050295-2">)</span><span class="w">
+</span><span class="nc">Job</span><span class="o">.</span><span class="n">worker_ready</span><span class="p" data-group-id="9098050295-6">(</span><span class="n">job_pid</span><span class="p">,</span><span class="w"> </span><span class="n">self</span><span class="p" data-group-id="9098050295-7">(</span><span class="p" data-group-id="9098050295-7">)</span><span class="p" data-group-id="9098050295-6">)</span><span class="w">
+</span><span class="nc">Job</span><span class="o">.</span><span class="n">task_completed</span><span class="p" data-group-id="9098050295-8">(</span><span class="n">job_pid</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="9098050295-9">{</span><span class="s">&quot;task_1&quot;</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="9098050295-10">{</span><span class="ss">:result</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task_result&quot;</span><span class="p" data-group-id="9098050295-10">}</span><span class="p">,</span><span class="w"> </span><span class="n">self</span><span class="p" data-group-id="9098050295-11">(</span><span class="p" data-group-id="9098050295-11">)</span><span class="p" data-group-id="9098050295-9">}</span><span class="p" data-group-id="9098050295-8">)</span></code></pre>
+    </section>
+
+</div>
+
+  <section id="summary" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#summary">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Summary</span>
+    </h1>
+<div class="summary-functions summary">
+  <h2>
+    <a href="#functions">Functions</a>
+  </h2>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#child_spec/1" data-no-tooltip="" translate="no">child_spec(init_arg)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Returns a specification to start this module under a supervisor.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#handle_cast/2" data-no-tooltip="" translate="no">handle_cast(msg, state)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Handles asynchronous messages related to worker readiness and task completion.
+This function processes messages sent to the job, such as when a worker is ready
+to take tasks or when a task has been completed by a worker. It updates the job state
+accordingly and checks if the job should finish based on the current state.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#handle_info/2" data-no-tooltip="" translate="no">handle_info(msg, state)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Handles informational messages related to worker readiness notifications.
+This function processes messages sent to the job when a worker is ready
+to take tasks. It updates the job state by adding the worker to the list of
+free workers and logs the addition of the new worker.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#init/1" data-no-tooltip="" translate="no">init(state)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Initializes the job state when the GenServer starts.
+This function sets up the initial state of the job, including
+the task returns, ongoing tasks, free workers, results, and the start time.
+It also logs the start of the job for debugging purposes.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#start_link/1" data-no-tooltip="" translate="no">start_link(state)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Starts the job with the given initial state.
+This function initializes the job by setting up the necessary state
+and prepares it to handle tasks and workers. It also logs the start of the</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#task_completed/2" data-no-tooltip="" translate="no">task_completed(job_id, arg)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Notifies the job that a task has been completed by a worker.
+This function is called when a worker finishes executing a task.
+It sends a message to the job process indicating that the task has been completed,
+along with the task name, result, and worker PID. The job process will then
+handle this message to update its state accordingly.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#worker_ready/2" data-no-tooltip="" translate="no">worker_ready(job_pid, worker_pid)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Notifies the job that a worker is ready to take tasks.
+This function is called when a worker signals that it is ready to receive tasks.
+It sends a message to the job process indicating that the worker is ready,
+allowing the job to assign tasks to the worker as they become available.</p></div>
+
+    </div>
+
+</div>
+
+  </section>
+
+
+  <section id="functions" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#functions">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Functions</span>
+    </h1>
+    <div class="functions-list">
+<section class="detail" id="child_spec/1">
+
+  <div class="detail-header">
+    <a href="#child_spec/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">child_spec(init_arg)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Returns a specification to start this module under a supervisor.</p><p>See <a href="https://hexdocs.pm/elixir/Supervisor.html"><code class="inline">Supervisor</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="handle_cast/2">
+
+  <div class="detail-header">
+    <a href="#handle_cast/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">handle_cast(msg, state)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Handles asynchronous messages related to worker readiness and task completion.
+This function processes messages sent to the job, such as when a worker is ready
+to take tasks or when a task has been completed by a worker. It updates the job state
+accordingly and checks if the job should finish based on the current state.</p><h4>Parameters:</h4><ul><li><code class="inline">message</code>: The message to be processed, which can be either a worker readiness notification
+or a task completion notification.</li><li><code class="inline">state</code>: The current state of the job, which includes ongoing tasks, free workers, and results.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:noreply, new_state}</code>: Returns the updated state of the job wrapped in a <code class="inline">:noreply</code> tuple.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="nc">GenServer</span><span class="o">.</span><span class="n">cast</span><span class="p" data-group-id="3569710369-1">(</span><span class="n">job_pid</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3569710369-2">{</span><span class="ss">:worker_ready</span><span class="p">,</span><span class="w"> </span><span class="n">worker_pid</span><span class="p" data-group-id="3569710369-2">}</span><span class="p" data-group-id="3569710369-1">)</span><span class="w">
+</span><span class="nc">GenServer</span><span class="o">.</span><span class="n">cast</span><span class="p" data-group-id="3569710369-3">(</span><span class="n">job_pid</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3569710369-4">{</span><span class="ss">:task_terminated</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3569710369-5">{</span><span class="n">task_name</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3569710369-6">{</span><span class="ss">:result</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p" data-group-id="3569710369-6">}</span><span class="p">,</span><span class="w"> </span><span class="n">worker_pid</span><span class="p" data-group-id="3569710369-5">}</span><span class="p" data-group-id="3569710369-4">}</span><span class="p" data-group-id="3569710369-3">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="handle_info/2">
+
+  <div class="detail-header">
+    <a href="#handle_info/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">handle_info(msg, state)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Handles informational messages related to worker readiness notifications.
+This function processes messages sent to the job when a worker is ready
+to take tasks. It updates the job state by adding the worker to the list of
+free workers and logs the addition of the new worker.</p><h4>Parameters:</h4><ul><li><code class="inline">message</code>: The informational message containing the worker PID.</li><li><code class="inline">state</code>: The current state of the job, which includes ongoing tasks, free workers, and results.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:noreply, state}</code>: Returns the current state of the job wrapped in a <code class="inline">:noreply</code> tuple.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="nc">GenServer</span><span class="o">.</span><span class="n">handle_info</span><span class="p" data-group-id="4366458021-1">(</span><span class="p" data-group-id="4366458021-2">{</span><span class="ss">:notify_ready</span><span class="p">,</span><span class="w"> </span><span class="n">worker_pid</span><span class="p" data-group-id="4366458021-2">}</span><span class="p">,</span><span class="w"> </span><span class="n">state</span><span class="p" data-group-id="4366458021-1">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="init/1">
+
+  <div class="detail-header">
+    <a href="#init/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">init(state)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Initializes the job state when the GenServer starts.
+This function sets up the initial state of the job, including
+the task returns, ongoing tasks, free workers, results, and the start time.
+It also logs the start of the job for debugging purposes.</p><h4>Parameters:</h4><ul><li><code class="inline">state</code>: The initial state of the job, which includes the job ID and tasks to be executed.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:ok, state}</code>: Returns the initial state of the job wrapped in an <code class="inline">:ok</code> tuple.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="7230562270-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">initial_state</span><span class="p" data-group-id="7230562270-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Job</span><span class="o">.</span><span class="n">init</span><span class="p" data-group-id="7230562270-2">(</span><span class="p" data-group-id="7230562270-3">%{</span><span class="ss">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;job_1&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">tasks</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="7230562270-4">%{</span><span class="s">&quot;task_1&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="7230562270-5">%{</span><span class="s">&quot;exec&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;some_exec&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;timeout&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mi">5000</span><span class="p" data-group-id="7230562270-5">}</span><span class="p" data-group-id="7230562270-4">}</span><span class="p" data-group-id="7230562270-3">}</span><span class="p" data-group-id="7230562270-2">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="start_link/1">
+
+  <div class="detail-header">
+    <a href="#start_link/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">start_link(state)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Starts the job with the given initial state.
+This function initializes the job by setting up the necessary state
+and prepares it to handle tasks and workers. It also logs the start of the</p><h4>Parameters:</h4><ul><li><code class="inline">state</code>: The initial state of the job, which includes the job ID and tasks to be executed.   Returns::</li><li><code class="inline">{:ok, pid}</code>: Returns the PID of the started job process wrapped in an <code class="inline">:ok</code> tuple.
+mple:
+:<pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="5173499766-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">job_pid</span><span class="p" data-group-id="5173499766-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Job</span><span class="o">.</span><span class="n">start_link</span><span class="p" data-group-id="5173499766-2">(</span><span class="p" data-group-id="5173499766-3">%{</span><span class="ss">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;job_1&quot;</span><span class="p">,</span><span class="w"> </span><span class="ss">tasks</span><span class="p">:</span><span class="w"> </span><span class="p" data-group-id="5173499766-4">%{</span><span class="s">&quot;task_1&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="5173499766-5">%{</span><span class="s">&quot;exec&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;some_exec&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;timeout&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="mi">5000</span><span class="p" data-group-id="5173499766-5">}</span><span class="w">
+</span><span class="p" data-group-id="5173499766-4">}</span><span class="p" data-group-id="5173499766-3">}</span><span class="p" data-group-id="5173499766-2">)</span></code></pre></li></ul>
+  </section>
+</section>
+<section class="detail" id="task_completed/2">
+
+  <div class="detail-header">
+    <a href="#task_completed/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">task_completed(job_id, arg)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Notifies the job that a task has been completed by a worker.
+This function is called when a worker finishes executing a task.
+It sends a message to the job process indicating that the task has been completed,
+along with the task name, result, and worker PID. The job process will then
+handle this message to update its state accordingly.</p><h4>Parameters:</h4><ul><li><code class="inline">job_id</code>: The ID of the job process that is handling the task.</li><li><code class="inline">task_name</code>: The name of the task that has been completed.</li><li><code class="inline">result</code>: The result of the task execution, which can be a success or failure.</li><li><code class="inline">worker_pid</code>: The PID of the worker that completed the task.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="nc">Job</span><span class="o">.</span><span class="n">task_completed</span><span class="p" data-group-id="2992559947-1">(</span><span class="n">job_id</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="2992559947-2">{</span><span class="s">&quot;task_1&quot;</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="2992559947-3">{</span><span class="ss">:result</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;task_result&quot;</span><span class="p" data-group-id="2992559947-3">}</span><span class="p">,</span><span class="w"> </span><span class="n">worker_pid</span><span class="p" data-group-id="2992559947-2">}</span><span class="p" data-group-id="2992559947-1">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="worker_ready/2">
+
+  <div class="detail-header">
+    <a href="#worker_ready/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">worker_ready(job_pid, worker_pid)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Notifies the job that a worker is ready to take tasks.
+This function is called when a worker signals that it is ready to receive tasks.
+It sends a message to the job process indicating that the worker is ready,
+allowing the job to assign tasks to the worker as they become available.</p><h4>Parameters:</h4><ul><li><code class="inline">job_pid</code>: The PID of the job process that is managing the workers.</li><li><code class="inline">worker_pid</code>: The PID of the worker that is ready to take tasks.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="nc">Job</span><span class="o">.</span><span class="n">worker_ready</span><span class="p" data-group-id="5854736356-1">(</span><span class="n">job_pid</span><span class="p">,</span><span class="w"> </span><span class="n">worker_pid</span><span class="p" data-group-id="5854736356-1">)</span></code></pre>
+  </section>
+</section>
+
+    </div>
+  </section>
+
+    <footer class="footer">
+      <p>
+
+        <span class="line">
+          <button class="a-main footer-button display-quick-switch" title="Search HexDocs packages">
+            Search HexDocs
+          </button>
+
+            <a href="spe.epub" title="ePub version">
+              Download ePub version
+            </a>
+
+        </span>
+      </p>
+
+      <p class="built-using">
+        Built using
+        <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.38.2) for the
+
+          <a href="https://elixir-lang.org" title="Elixir" target="_blank" translate="no">Elixir programming language</a>
+
+      </p>
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

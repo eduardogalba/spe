@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.38.2">
+    <meta name="project" content="spe v1.0.0">
+
+
+    <title>JobManager — spe v1.0.0</title>
+
+    <link rel="stylesheet" href="dist/html-elixir-KV3YOVJ3.css" />
+
+    <script defer src="dist/sidebar_items-A0985B5F.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-DPJLHKSM.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="api-reference.html" class="sidebar-projectName" translate="no">
+spe
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v1.0.0
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras=""></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-module" id="main" data-type="modules">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of spe</span>
+            <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <button type="submit" class="search-button" aria-label="Submit Search" tabindex="-1">
+            <i class="ri-search-2-line ri-lg" aria-hidden="true"></i>
+          </button>
+          <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+            <i class="ri-close-line ri-lg" title="Cancel search"></i>
+          </button>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>
+      <span translate="no">JobManager</span> 
+      <small class="app-vsn" translate="no">(spe v1.0.0)</small>
+
+    </h1>
+
+  </div>
+
+
+    <section id="moduledoc">
+<p><strong>JobManager</strong> is responsible for managing jobs, including submitting jobs, starting them, and handling their plans.
+It uses a GenServer to maintain state and handle calls related to job management.</p><h2 id="module-usage" class="section-heading"><a href="#module-usage" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Usage:</span></h2><ul><li>Start the JobManager<pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="4020893446-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="c">_pid</span><span class="p" data-group-id="4020893446-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JobManager</span><span class="o">.</span><span class="n">start_link</span><span class="p" data-group-id="4020893446-2">(</span><span class="ss">num_workers</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p" data-group-id="4020893446-2">)</span></code></pre></li><li>Submit a job<pre><code class="makeup elixir" translate="no"><span class="n">job_desc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="9951584483-1">%{</span><span class="w">
+</span><span class="s">&quot;tasks&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="9951584483-2">[</span><span class="w">
+  </span><span class="p" data-group-id="9951584483-3">%{</span><span class="s">&quot;name&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;enables&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="9951584483-4">[</span><span class="s">&quot;task2&quot;</span><span class="p" data-group-id="9951584483-4">]</span><span class="p" data-group-id="9951584483-3">}</span><span class="p">,</span><span class="w">
+  </span><span class="p" data-group-id="9951584483-5">%{</span><span class="s">&quot;name&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;enables&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="9951584483-6">[</span><span class="p" data-group-id="9951584483-6">]</span><span class="p" data-group-id="9951584483-5">}</span><span class="w">
+</span><span class="p" data-group-id="9951584483-2">]</span><span class="w">
+</span><span class="p" data-group-id="9951584483-1">}</span><span class="w">
+</span><span class="p" data-group-id="9951584483-7">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">job_id</span><span class="p" data-group-id="9951584483-7">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JobManager</span><span class="o">.</span><span class="n">submit_job</span><span class="p" data-group-id="9951584483-8">(</span><span class="n">job_desc</span><span class="p" data-group-id="9951584483-8">)</span></code></pre></li><li>Start the job<pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="6989142742-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="c">_job_id</span><span class="p" data-group-id="6989142742-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JobManager</span><span class="o">.</span><span class="n">start_job</span><span class="p" data-group-id="6989142742-2">(</span><span class="n">job_id</span><span class="p" data-group-id="6989142742-2">)</span></code></pre></li></ul><h2 id="module-notes" class="section-heading"><a href="#module-notes" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Notes:</span></h2><ul><li>The JobManager uses a planning module (<a href="Planner.html"><code class="inline">Planner</code></a>) to create a plan for the job based on the job description and the number of workers available.</li><li>It handles job submissions and starts jobs based on the plans created.</li><li>The JobManager maintains a state that includes the jobs and their plans, as well as the number of workers available for job execution.</li><li>It logs debug information about job submissions, plans, and task management.</li></ul><h2 id="module-dependencies" class="section-heading"><a href="#module-dependencies" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Dependencies:</span></h2><ul><li><a href="https://hexdocs.pm/elixir/GenServer.html"><code class="inline">GenServer</code></a>: For managing the state and handling calls.</li><li><a href="https://hexdocs.pm/logger/Logger.html"><code class="inline">Logger</code></a>: For logging debug information.</li><li><a href="Planner.html"><code class="inline">Planner</code></a>: A module responsible for planning jobs based on their descriptions and available workers.</li></ul>
+    </section>
+
+</div>
+
+  <section id="summary" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#summary">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Summary</span>
+    </h1>
+<div class="summary-functions summary">
+  <h2>
+    <a href="#functions">Functions</a>
+  </h2>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#child_spec/1" data-no-tooltip="" translate="no">child_spec(init_arg)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Returns a specification to start this module under a supervisor.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#handle_call/3" data-no-tooltip="" translate="no">handle_call(msg, from, state)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Handles job submission by receiving a job description, planning the job, and storing it in the state.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#handle_info/2" data-no-tooltip="" translate="no">handle_info(msg, state)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Handles job planning by receiving a job ID and its planned tasks, updating the state with the new plan.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#init/1" data-no-tooltip="" translate="no">init(state)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Initializes the JobManager with a state containing the number of workers, jobs, and waiting jobs.
+The <code class="inline">num_workers</code> can be set to <code class="inline">:unbound</code> to allow dynamic worker allocation based on job requirements.
+The <code class="inline">jobs</code> map will hold the jobs submitted, and <code class="inline">waiting</code> can be used for jobs that are waiting to be processed.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#plan_ready/2" data-no-tooltip="" translate="no">plan_ready(job_id, job_plan)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Notifies the JobManager that a job plan is ready for the given job ID.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#start_job/1" data-no-tooltip="" translate="no">start_job(job_id)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Starts a job with the given job ID.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#start_link/1" data-no-tooltip="" translate="no">start_link(opts)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Starts the JobManager GenServer with the specified options.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#submit_job/1" data-no-tooltip="" translate="no">submit_job(job_desc)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Submits a job to the JobManager with the given job description.</p></div>
+
+    </div>
+
+</div>
+
+  </section>
+
+
+  <section id="functions" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#functions">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Functions</span>
+    </h1>
+    <div class="functions-list">
+<section class="detail" id="child_spec/1">
+
+  <div class="detail-header">
+    <a href="#child_spec/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">child_spec(init_arg)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Returns a specification to start this module under a supervisor.</p><p>See <a href="https://hexdocs.pm/elixir/Supervisor.html"><code class="inline">Supervisor</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="handle_call/3">
+
+  <div class="detail-header">
+    <a href="#handle_call/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">handle_call(msg, from, state)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Handles job submission by receiving a job description, planning the job, and storing it in the state.</p><h4>Parameters:</h4><ul><li><code class="inline">{:submit, job_desc}</code>: A tuple containing the job description to be submitted.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:reply, {:ok, job_id}, new_state}</code>: If the job is successfully planned and stored, it returns the job ID and the updated state.</li><li><code class="inline">{:reply, {:error, error}, state}</code>: If there is an error in planning the job, it returns the error and the current state.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="n">job_desc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="6317783374-1">%{</span><span class="w">
+  </span><span class="s">&quot;tasks&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="6317783374-2">[</span><span class="w">
+    </span><span class="p" data-group-id="6317783374-3">%{</span><span class="s">&quot;name&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;enables&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="6317783374-4">[</span><span class="s">&quot;task2&quot;</span><span class="p" data-group-id="6317783374-4">]</span><span class="p" data-group-id="6317783374-3">}</span><span class="p">,</span><span class="w">
+    </span><span class="p" data-group-id="6317783374-5">%{</span><span class="s">&quot;name&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;enables&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="6317783374-6">[</span><span class="p" data-group-id="6317783374-6">]</span><span class="p" data-group-id="6317783374-5">}</span><span class="w">
+  </span><span class="p" data-group-id="6317783374-2">]</span><span class="w">
+</span><span class="p" data-group-id="6317783374-1">}</span><span class="w">
+</span><span class="p" data-group-id="6317783374-7">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">job_id</span><span class="p" data-group-id="6317783374-7">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JobManager</span><span class="o">.</span><span class="n">submit_job</span><span class="p" data-group-id="6317783374-8">(</span><span class="n">job_desc</span><span class="p" data-group-id="6317783374-8">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="handle_info/2">
+
+  <div class="detail-header">
+    <a href="#handle_info/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">handle_info(msg, state)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Handles job planning by receiving a job ID and its planned tasks, updating the state with the new plan.</p><h4>Parameters:</h4><ul><li><code class="inline">{:planning, {job_id, job_plan}}</code>: A tuple containing the job ID and its planned tasks.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:noreply, new_state}</code>: The updated state after planning the job.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="n">job_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;12345&quot;</span><span class="w">
+</span><span class="n">job_plan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="7956683325-1">[</span><span class="p" data-group-id="7956683325-2">%{</span><span class="s">&quot;task&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task1&quot;</span><span class="p" data-group-id="7956683325-2">}</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="7956683325-3">%{</span><span class="s">&quot;task&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="p" data-group-id="7956683325-3">}</span><span class="p" data-group-id="7956683325-1">]</span><span class="w">
+</span><span class="nc">JobManager</span><span class="o">.</span><span class="n">plan_ready</span><span class="p" data-group-id="7956683325-4">(</span><span class="n">job_id</span><span class="p">,</span><span class="w"> </span><span class="n">job_plan</span><span class="p" data-group-id="7956683325-4">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="init/1">
+
+  <div class="detail-header">
+    <a href="#init/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">init(state)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Initializes the JobManager with a state containing the number of workers, jobs, and waiting jobs.
+The <code class="inline">num_workers</code> can be set to <code class="inline">:unbound</code> to allow dynamic worker allocation based on job requirements.
+The <code class="inline">jobs</code> map will hold the jobs submitted, and <code class="inline">waiting</code> can be used for jobs that are waiting to be processed.</p><h4>Parameters:</h4><ul><li><code class="inline">state</code>: The initial state of the JobManager, including the number of workers, jobs, and waiting jobs.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:ok, state}</code>: The initial state of the JobManager is returned, ready to handle job submissions and starts.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="4336381462-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="c">_pid</span><span class="p" data-group-id="4336381462-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JobManager</span><span class="o">.</span><span class="n">start_link</span><span class="p" data-group-id="4336381462-2">(</span><span class="ss">num_workers</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p" data-group-id="4336381462-2">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="plan_ready/2">
+
+  <div class="detail-header">
+    <a href="#plan_ready/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">plan_ready(job_id, job_plan)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Notifies the JobManager that a job plan is ready for the given job ID.</p><h4>Parameters:</h4><ul><li><code class="inline">job_id</code>: The ID of the job for which the plan is ready.</li><li><code class="inline">job_plan</code>: The planned tasks for the job.</li></ul><h4>Returns:</h4><ul><li><code class="inline">:ok</code>: If the plan is successfully received and processed.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="n">job_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;12345&quot;</span><span class="w">
+</span><span class="n">job_plan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="3307436012-1">[</span><span class="p" data-group-id="3307436012-2">%{</span><span class="s">&quot;task&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task1&quot;</span><span class="p" data-group-id="3307436012-2">}</span><span class="p">,</span><span class="w"> </span><span class="p" data-group-id="3307436012-3">%{</span><span class="s">&quot;task&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="p" data-group-id="3307436012-3">}</span><span class="p" data-group-id="3307436012-1">]</span><span class="w">
+</span><span class="nc">JobManager</span><span class="o">.</span><span class="n">plan_ready</span><span class="p" data-group-id="3307436012-4">(</span><span class="n">job_id</span><span class="p">,</span><span class="w"> </span><span class="n">job_plan</span><span class="p" data-group-id="3307436012-4">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="start_job/1">
+
+  <div class="detail-header">
+    <a href="#start_job/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">start_job(job_id)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Starts a job with the given job ID.</p><h4>Parameters:</h4><ul><li><code class="inline">job_id</code>: The ID of the job to be started.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:ok, job_id}</code>: If the job is successfully started, it returns the job ID.</li><li><code class="inline">{:error, error}</code>: If there is an error in starting the job, it returns the error.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="2053019679-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="c">_job_id</span><span class="p" data-group-id="2053019679-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JobManager</span><span class="o">.</span><span class="n">start_job</span><span class="p" data-group-id="2053019679-2">(</span><span class="s">&quot;12345&quot;</span><span class="p" data-group-id="2053019679-2">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="start_link/1">
+
+  <div class="detail-header">
+    <a href="#start_link/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">start_link(opts)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Starts the JobManager GenServer with the specified options.</p><h4>Parameters:</h4><ul><li><code class="inline">opts</code>: A keyword list of options, including <code class="inline">:num_workers</code> to specify the number of workers and <code class="inline">:name</code> to set the GenServer name.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:ok, pid}</code>: The PID of the started JobManager GenServer.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="4774163790-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="c">_pid</span><span class="p" data-group-id="4774163790-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JobManager</span><span class="o">.</span><span class="n">start_link</span><span class="p" data-group-id="4774163790-2">(</span><span class="ss">num_workers</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="ss">name</span><span class="p">:</span><span class="w"> </span><span class="ss">:job_manager</span><span class="p" data-group-id="4774163790-2">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="submit_job/1">
+
+  <div class="detail-header">
+    <a href="#submit_job/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">submit_job(job_desc)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Submits a job to the JobManager with the given job description.</p><h4>Parameters:</h4><ul><li><code class="inline">job_desc</code>: A map containing the job description, including tasks and their dependencies.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:ok, job_id}</code>: If the job is successfully submitted and planned, it returns the job ID.</li><li><code class="inline">{:error, error}</code>: If there is an error in planning the job, it returns the error.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="n">job_desc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="1116331093-1">%{</span><span class="w">
+  </span><span class="s">&quot;tasks&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="1116331093-2">[</span><span class="w">
+    </span><span class="p" data-group-id="1116331093-3">%{</span><span class="s">&quot;name&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;enables&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="1116331093-4">[</span><span class="s">&quot;task2&quot;</span><span class="p" data-group-id="1116331093-4">]</span><span class="p" data-group-id="1116331093-3">}</span><span class="p">,</span><span class="w">
+    </span><span class="p" data-group-id="1116331093-5">%{</span><span class="s">&quot;name&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;enables&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="1116331093-6">[</span><span class="p" data-group-id="1116331093-6">]</span><span class="p" data-group-id="1116331093-5">}</span><span class="w">
+  </span><span class="p" data-group-id="1116331093-2">]</span><span class="w">
+</span><span class="p" data-group-id="1116331093-1">}</span><span class="w">
+</span><span class="p" data-group-id="1116331093-7">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">job_id</span><span class="p" data-group-id="1116331093-7">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">JobManager</span><span class="o">.</span><span class="n">submit_job</span><span class="p" data-group-id="1116331093-8">(</span><span class="n">job_desc</span><span class="p" data-group-id="1116331093-8">)</span></code></pre>
+  </section>
+</section>
+
+    </div>
+  </section>
+
+    <footer class="footer">
+      <p>
+
+        <span class="line">
+          <button class="a-main footer-button display-quick-switch" title="Search HexDocs packages">
+            Search HexDocs
+          </button>
+
+            <a href="spe.epub" title="ePub version">
+              Download ePub version
+            </a>
+
+        </span>
+      </p>
+
+      <p class="built-using">
+        Built using
+        <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.38.2) for the
+
+          <a href="https://elixir-lang.org" title="Elixir" target="_blank" translate="no">Elixir programming language</a>
+
+      </p>
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>

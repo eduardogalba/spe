@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.38.2">
+    <meta name="project" content="spe v1.0.0">
+
+
+    <title>SPE — spe v1.0.0</title>
+
+    <link rel="stylesheet" href="dist/html-elixir-KV3YOVJ3.css" />
+
+    <script defer src="dist/sidebar_items-A0985B5F.js"></script>
+    <script defer src="docs_config.js"></script>
+    <script defer src="dist/html-DPJLHKSM.js"></script>
+
+  </head>
+  <body>
+    <script>(()=>{var t="ex_doc:settings",e="dark";var o="dark",s="light";var E="sidebar_state",n="closed";var r="sidebar_width";var a="sidebar-open";var i=new URLSearchParams(window.location.search),S=i.get("theme")||JSON.parse(localStorage.getItem(t)||"{}").theme;(S===o||S!==s&&window.matchMedia("(prefers-color-scheme: dark)").matches)&&document.body.classList.add(e);var d=sessionStorage.getItem(E),A=d!==n&&!window.matchMedia(`screen and (max-width: ${768}px)`).matches;document.body.classList.toggle(a,A);var c=sessionStorage.getItem(r);c&&document.body.style.setProperty("--sidebarWidth",`${c}px`);var p=/(Macintosh|iPhone|iPad|iPod)/.test(window.navigator.userAgent);document.documentElement.classList.toggle("apple-os",p);})();
+</script>
+
+<div class="body-wrapper">
+
+<button id="sidebar-menu" class="sidebar-button sidebar-toggle" aria-label="toggle sidebar" aria-controls="sidebar">
+  <i class="ri-menu-line ri-lg" title="Collapse/expand sidebar"></i>
+</button>
+
+<nav id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+    <div class="sidebar-projectInfo">
+
+      <div>
+        <a href="api-reference.html" class="sidebar-projectName" translate="no">
+spe
+        </a>
+        <div class="sidebar-projectVersion" translate="no">
+          v1.0.0
+        </div>
+      </div>
+    </div>
+    <ul id="sidebar-list-nav" class="sidebar-list-nav" role="tablist" data-extras=""></ul>
+  </div>
+</nav>
+
+<output role="status" id="toast"></output>
+
+<main class="content page-module" id="main" data-type="modules">
+  <div id="content" class="content-inner">
+    <div class="top-search">
+      <div class="search-settings">
+        <form class="search-bar" action="search.html">
+          <label class="search-label">
+            <span class="sr-only">Search documentation of spe</span>
+            <input name="q" type="text" class="search-input" placeholder="Press / to search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <button type="submit" class="search-button" aria-label="Submit Search" tabindex="-1">
+            <i class="ri-search-2-line ri-lg" aria-hidden="true"></i>
+          </button>
+          <button type="button" tabindex="-1" class="search-close-button" aria-hidden="true">
+            <i class="ri-close-line ri-lg" title="Cancel search"></i>
+          </button>
+        </form>
+        <div class="autocomplete">
+        </div>
+        <button class="icon-settings display-settings">
+          <i class="ri-settings-3-line"></i>
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+
+<div id="top-content">
+  <div class="heading-with-actions top-heading">
+    <h1>
+      <span translate="no">SPE</span> 
+      <small class="app-vsn" translate="no">(spe v1.0.0)</small>
+
+    </h1>
+
+  </div>
+
+
+    <section id="moduledoc">
+<p><strong>SPE</strong> is the main module for the SPE (Scalable Parallel Execution) system.
+It is responsible for starting the server, managing job submissions, and handling job starts.
+It uses a GenServer to maintain the state of the system and handle calls related to job management.</p><h2 id="module-usage" class="section-heading"><a href="#module-usage" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Usage:</span></h2><ul><li>Start the SPE server<pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="8167199167-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="c">_pid</span><span class="p" data-group-id="8167199167-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">SPE</span><span class="o">.</span><span class="n">start_link</span><span class="p" data-group-id="8167199167-2">(</span><span class="ss">num_workers</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p" data-group-id="8167199167-2">)</span></code></pre></li><li>Submit a job<pre><code class="makeup elixir" translate="no"><span class="n">job_desc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="1071671795-1">%{</span><span class="w">
+</span><span class="s">&quot;tasks&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="1071671795-2">[</span><span class="w">
+  </span><span class="p" data-group-id="1071671795-3">%{</span><span class="s">&quot;name&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;enables&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="1071671795-4">[</span><span class="s">&quot;task2&quot;</span><span class="p" data-group-id="1071671795-4">]</span><span class="p" data-group-id="1071671795-3">}</span><span class="p">,</span><span class="w">
+  </span><span class="p" data-group-id="1071671795-5">%{</span><span class="s">&quot;name&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;enables&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="1071671795-6">[</span><span class="p" data-group-id="1071671795-6">]</span><span class="p" data-group-id="1071671795-5">}</span><span class="w">
+</span><span class="p" data-group-id="1071671795-2">]</span><span class="w">
+</span><span class="p" data-group-id="1071671795-1">}</span><span class="w">
+</span><span class="p" data-group-id="1071671795-7">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">job_id</span><span class="p" data-group-id="1071671795-7">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">SPE</span><span class="o">.</span><span class="n">submit_job</span><span class="p" data-group-id="1071671795-8">(</span><span class="n">job_desc</span><span class="p" data-group-id="1071671795-8">)</span></code></pre></li><li>Start the job<pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="3014307706-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="c">_job_id</span><span class="p" data-group-id="3014307706-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">SPE</span><span class="o">.</span><span class="n">start_job</span><span class="p" data-group-id="3014307706-2">(</span><span class="n">job_id</span><span class="p" data-group-id="3014307706-2">)</span></code></pre></li></ul><h2 id="module-notes" class="section-heading"><a href="#module-notes" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Notes:</span></h2><ul><li>The SPE module uses a <a href="JobManager.html"><code class="inline">JobManager</code></a> to handle job submissions and starts.</li><li>It maintains a state that includes waiting jobs, which are jobs that are waiting for their plans to be ready before they can start.</li><li>It logs debug information about job submissions, starts, and other events.</li></ul><h2 id="module-dependencies" class="section-heading"><a href="#module-dependencies" class="hover-link"><i class="ri-link-m" aria-hidden="true"></i></a><span class="text">Dependencies:</span></h2><ul><li><a href="https://hexdocs.pm/elixir/GenServer.html"><code class="inline">GenServer</code></a>: For managing the state and handling calls.</li><li><a href="https://hexdocs.pm/logger/Logger.html"><code class="inline">Logger</code></a>: For logging debug information.</li><li><a href="JobManager.html"><code class="inline">JobManager</code></a>: A module responsible for managing jobs, including submitting jobs, starting them, and handling their plans.</li><li><a href="SuperManager.html"><code class="inline">SuperManager</code></a>: A module responsible for managing the overall system and ensuring that the SPE server is running.</li></ul>
+    </section>
+
+</div>
+
+  <section id="summary" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#summary">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Summary</span>
+    </h1>
+<div class="summary-functions summary">
+  <h2>
+    <a href="#functions">Functions</a>
+  </h2>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#child_spec/1" data-no-tooltip="" translate="no">child_spec(init_arg)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Returns a specification to start this module under a supervisor.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#handle_call/3" data-no-tooltip="" translate="no">handle_call(msg, from, state)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Handles synchronous calls to the SPE server.
+It processes job start requests and job submissions.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#handle_info/2" data-no-tooltip="" translate="no">handle_info(msg, state)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Handles generic info messages sent to the SPE server.
+It logs the received message and returns the current state without any changes.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#init/1" data-no-tooltip="" translate="no">init(arg)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Initializes the SPE server with the given options and state.
+The options can include the number of workers, which will be passed to the JobManager.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#job_ready/2" data-no-tooltip="" translate="no">job_ready(job_id, response)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Notifies the SPE server that a job is ready to start.
+This function is called when a job plan is ready, and it will notify the waiting clients that the job can now start.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#start_job/1" data-no-tooltip="" translate="no">start_job(job_id)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Starts a job with the given job ID.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#start_link/1" data-no-tooltip="" translate="no">start_link(opts)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Starts the SPE server with the given options.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#submit_job/1" data-no-tooltip="" translate="no">submit_job(job_desc)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Submits a job to the SPE server with the given job description.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
+        <a href="#terminate/2" data-no-tooltip="" translate="no">terminate(reason, state)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Terminates the SPE server and stops the Supervisor managing it.
+This function is called when the SPE server is no longer needed, and it will clean up the resources used by the server.</p></div>
+
+    </div>
+
+</div>
+
+  </section>
+
+
+  <section id="functions" class="details-list">
+    <h1 class="section-heading">
+      <a class="hover-link" href="#functions">
+        <i class="ri-link-m" aria-hidden="true"></i>
+      </a>
+      <span class="text">Functions</span>
+    </h1>
+    <div class="functions-list">
+<section class="detail" id="child_spec/1">
+
+  <div class="detail-header">
+    <a href="#child_spec/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">child_spec(init_arg)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Returns a specification to start this module under a supervisor.</p><p>See <a href="https://hexdocs.pm/elixir/Supervisor.html"><code class="inline">Supervisor</code></a>.</p>
+  </section>
+</section>
+<section class="detail" id="handle_call/3">
+
+  <div class="detail-header">
+    <a href="#handle_call/3" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">handle_call(msg, from, state)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Handles synchronous calls to the SPE server.
+It processes job start requests and job submissions.</p><h4>Parameters:</h4><ul><li><code class="inline">{:start_job, job_id}</code>: A tuple containing the job ID to start.</li><li><code class="inline">{:submit_job, job_desc}</code>: A tuple containing the job description to submit.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:reply, response, state}</code>: The response from the JobManager for the job start or submission, along with the current state.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="9196104245-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">job_id</span><span class="p" data-group-id="9196104245-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">SPE</span><span class="o">.</span><span class="n">start_job</span><span class="p" data-group-id="9196104245-2">(</span><span class="s">&quot;job_123&quot;</span><span class="p" data-group-id="9196104245-2">)</span><span class="w">
+</span><span class="p" data-group-id="9196104245-3">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">job_id</span><span class="p" data-group-id="9196104245-3">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">SPE</span><span class="o">.</span><span class="n">submit_job</span><span class="p" data-group-id="9196104245-4">(</span><span class="p" data-group-id="9196104245-5">%{</span><span class="s">&quot;tasks&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="9196104245-6">[</span><span class="p" data-group-id="9196104245-7">%{</span><span class="s">&quot;name&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;enables&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="9196104245-8">[</span><span class="p" data-group-id="9196104245-8">]</span><span class="p" data-group-id="9196104245-7">}</span><span class="p" data-group-id="9196104245-6">]</span><span class="p" data-group-id="9196104245-5">}</span><span class="p" data-group-id="9196104245-4">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="handle_info/2">
+
+  <div class="detail-header">
+    <a href="#handle_info/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">handle_info(msg, state)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Handles generic info messages sent to the SPE server.
+It logs the received message and returns the current state without any changes.</p><h4>Parameters:</h4><ul><li><code class="inline">msg</code>: The message received by the SPE server.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:noreply, state}</code>: The current state of the SPE server is returned without any changes.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="nc">SPE</span><span class="o">.</span><span class="n">handle_info</span><span class="p" data-group-id="3497743846-1">(</span><span class="ss">:some_info_message</span><span class="p">,</span><span class="w"> </span><span class="n">state</span><span class="p" data-group-id="3497743846-1">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="init/1">
+
+  <div class="detail-header">
+    <a href="#init/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">init(arg)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Initializes the SPE server with the given options and state.
+The options can include the number of workers, which will be passed to the JobManager.</p><h4>Parameters:</h4><ul><li><code class="inline">opts</code>: A keyword list of options, including <code class="inline">:num_workers</code> to specify the number of workers.</li><li><code class="inline">state</code>: The initial state of the SPE server, which includes a map for waiting jobs.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:ok, state}</code>: The initial state of the SPE server is returned, ready to handle job submissions and starts.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="7412015782-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="c">_pid</span><span class="p" data-group-id="7412015782-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">SPE</span><span class="o">.</span><span class="n">start_link</span><span class="p" data-group-id="7412015782-2">(</span><span class="ss">num_workers</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p" data-group-id="7412015782-2">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="job_ready/2">
+
+  <div class="detail-header">
+    <a href="#job_ready/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">job_ready(job_id, response)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Notifies the SPE server that a job is ready to start.
+This function is called when a job plan is ready, and it will notify the waiting clients that the job can now start.</p><h4>Parameters:</h4><ul><li><code class="inline">job_id</code>: The ID of the job that is ready to start.</li><li><code class="inline">response</code>: The response from the JobManager indicating whether the job can start or if there was an error.</li></ul><h4>Returns:</h4><ul><li><code class="inline">:ok</code>: If the job is successfully marked as ready to start.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="n">job_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;12345&quot;</span><span class="w">
+</span><span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="6326144792-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">job_id</span><span class="p" data-group-id="6326144792-1">}</span><span class="w">
+</span><span class="nc">SPE</span><span class="o">.</span><span class="n">job_ready</span><span class="p" data-group-id="6326144792-2">(</span><span class="n">job_id</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p" data-group-id="6326144792-2">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="start_job/1">
+
+  <div class="detail-header">
+    <a href="#start_job/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">start_job(job_id)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Starts a job with the given job ID.</p><h4>Parameters:</h4><ul><li><code class="inline">job_id</code>: The ID of the job to be started.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:ok, job_id}</code>: If the job is successfully started, it returns the job ID.</li><li><code class="inline">{:error, error}</code>: If there is an error in starting the job, it returns the error.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="9918278609-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="c">_job_id</span><span class="p" data-group-id="9918278609-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">SPE</span><span class="o">.</span><span class="n">start_job</span><span class="p" data-group-id="9918278609-2">(</span><span class="s">&quot;12345&quot;</span><span class="p" data-group-id="9918278609-2">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="start_link/1">
+
+  <div class="detail-header">
+    <a href="#start_link/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">start_link(opts)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Starts the SPE server with the given options.</p><h4>Parameters:</h4><ul><li><code class="inline">opts</code>: A keyword list of options, including <code class="inline">:num_workers</code> to specify the number of workers.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:ok, pid}</code>: The PID of the started SPE server.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="5788875864-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="c">_pid</span><span class="p" data-group-id="5788875864-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">SPE</span><span class="o">.</span><span class="n">start_link</span><span class="p" data-group-id="5788875864-2">(</span><span class="ss">num_workers</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p" data-group-id="5788875864-2">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="submit_job/1">
+
+  <div class="detail-header">
+    <a href="#submit_job/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">submit_job(job_desc)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Submits a job to the SPE server with the given job description.</p><h4>Parameters:</h4><ul><li><code class="inline">job_desc</code>: A map containing the job description, including tasks and their dependencies.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:ok, job_id}</code>: If the job is successfully submitted and planned, it returns the job ID.</li><li><code class="inline">{:error, :invalid_description}</code>: If the job description is invalid, it returns an error.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="n">job_desc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p" data-group-id="8387163688-1">%{</span><span class="w">
+  </span><span class="s">&quot;tasks&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="8387163688-2">[</span><span class="w">
+    </span><span class="p" data-group-id="8387163688-3">%{</span><span class="s">&quot;name&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;enables&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="8387163688-4">[</span><span class="s">&quot;task2&quot;</span><span class="p" data-group-id="8387163688-4">]</span><span class="p" data-group-id="8387163688-3">}</span><span class="p">,</span><span class="w">
+    </span><span class="p" data-group-id="8387163688-5">%{</span><span class="s">&quot;name&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="s">&quot;task2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;enables&quot;</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p" data-group-id="8387163688-6">[</span><span class="p" data-group-id="8387163688-6">]</span><span class="p" data-group-id="8387163688-5">}</span><span class="w">
+  </span><span class="p" data-group-id="8387163688-2">]</span><span class="w">
+</span><span class="p" data-group-id="8387163688-1">}</span><span class="w">
+</span><span class="p" data-group-id="8387163688-7">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">job_id</span><span class="p" data-group-id="8387163688-7">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">SPE</span><span class="o">.</span><span class="n">submit_job</span><span class="p" data-group-id="8387163688-8">(</span><span class="n">job_desc</span><span class="p" data-group-id="8387163688-8">)</span></code></pre>
+  </section>
+</section>
+<section class="detail" id="terminate/2">
+
+  <div class="detail-header">
+    <a href="#terminate/2" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">terminate(reason, state)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Terminates the SPE server and stops the Supervisor managing it.
+This function is called when the SPE server is no longer needed, and it will clean up the resources used by the server.</p><h4>Parameters:</h4><ul><li><code class="inline">_reason</code>: The reason for termination, which is not used in this implementation.</li><li><code class="inline">state</code>: The current state of the SPE server, which includes the Supervisor's PID.</li></ul><h4>Returns:</h4><ul><li><code class="inline">:ok</code>: Indicates that the SPE server has been successfully terminated.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="nc">SPE</span><span class="o">.</span><span class="n">terminate</span><span class="p" data-group-id="0084629336-1">(</span><span class="ss">:normal</span><span class="p">,</span><span class="w"> </span><span class="n">state</span><span class="p" data-group-id="0084629336-1">)</span></code></pre>
+  </section>
+</section>
+
+    </div>
+  </section>
+
+    <footer class="footer">
+      <p>
+
+        <span class="line">
+          <button class="a-main footer-button display-quick-switch" title="Search HexDocs packages">
+            Search HexDocs
+          </button>
+
+            <a href="spe.epub" title="ePub version">
+              Download ePub version
+            </a>
+
+        </span>
+      </p>
+
+      <p class="built-using">
+        Built using
+        <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" target="_blank" rel="help noopener" translate="no">ExDoc</a> (v0.38.2) for the
+
+          <a href="https://elixir-lang.org" title="Elixir" target="_blank" translate="no">Elixir programming language</a>
+
+      </p>
+
+    </footer>
+  </div>
+</main>
+</div>
+
+  </body>
+</html>
