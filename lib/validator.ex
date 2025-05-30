@@ -25,7 +25,24 @@ defmodule Validator do
   - `true` if the job description is valid, `false` otherwise.
   #### Example:
   ```elixir
-  is_valid = Validator.valid_job?(%{"name" => "example_job", "tasks" => [...]})
+  job_desc = %{
+    "name" => "nisse",
+    "tasks" => [
+      %{
+        "name" => "t0",
+        "enables" => [],
+        "exec" => fn _ -> 1 + 2 end,
+        "timeout" => :infinity
+      },
+      %{
+        "name" => "t1",
+        "enables" => ["t0"],
+        "exec" => fn _ -> 3 + 4 end,
+        "timeout" => :infinity
+      }
+    ]
+  }
+  is_valid = Validator.valid_job?(job_desc)
   ```
   """
   def valid_job?(job) do

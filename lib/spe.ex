@@ -11,9 +11,20 @@ defmodule SPE do
   - Submit a job
   ```elixir
   job_desc = %{
+    "name" => "nisse",
     "tasks" => [
-      %{"name" => "task1", "enables" => ["task2"]},
-      %{"name" => "task2", "enables" => []}
+      %{
+        "name" => "t0",
+        "enables" => [],
+        "exec" => fn _ -> 1 + 2 end,
+        "timeout" => :infinity
+      },
+      %{
+        "name" => "t1",
+        "enables" => ["t0"],
+        "exec" => fn _ -> 3 + 4 end,
+        "timeout" => :infinity
+      }
     ]
   }
   {:ok, job_id} = SPE.submit_job(job_desc)
@@ -64,6 +75,7 @@ defmodule SPE do
         Logger.error(
           "[SPE #{inspect(self())}]: One of the child processes is crashing caused by #{inspect(reason)}"
         )
+
         error
     end
   end
@@ -76,11 +88,6 @@ defmodule SPE do
   - `{:submit_job, job_desc}`: A tuple containing the job description to submit.
   #### Returns:
   - `{:reply, response, state}`: The response from the JobManager for the job start or submission, along with the current state.
-  #### Example:
-  ```elixir
-  {:ok, job_id} = SPE.start_job("job_123")
-  {:ok, job_id} = SPE.submit_job(%{"tasks" => [%{"name" => "task1", "enables" => []}]})
-  ```
   """
   def handle_call({:start_job, job_id}, from, state) do
     case JobManager.start_job(job_id) do
@@ -132,9 +139,6 @@ defmodule SPE do
   #### Returns:
   - `{:noreply, state}`: The current state of the SPE server is returned without any changes.
   #### Example:
-  ```elixir
-  SPE.handle_info(:some_info_message, state)
-  ```
   """
   def handle_info(msg, state) do
     Logger.debug("Generic info")

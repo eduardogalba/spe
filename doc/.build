@@ -5,6 +5,7 @@ Planner.html
 SPE.html
 SuperJob.html
 SuperManager.html
+SuperSPE.html
 SuperWorker.html
 Validator.html
 Worker.html
@@ -16,7 +17,7 @@ dist/lato-latin-700-normal-2XVSBPG4.woff2
 dist/lato-latin-ext-400-normal-N27NCBWW.woff2
 dist/lato-latin-ext-700-normal-Q2L5DVMW.woff2
 dist/remixicon-QPNJX265.woff2
-dist/search_data-DC2B8398.js
-dist/sidebar_items-A0985B5F.js
+dist/search_data-B01FD9E4.js
+dist/sidebar_items-F7FA316C.js
 index.html
 search.html

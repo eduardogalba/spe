@@ -11,11 +11,6 @@ defmodule Job do
   send tasks to it using `Job.task_completed/2` and `Job.worker_ready/2`.
   It is designed to work with a distributed system where tasks can be executed by multiple workers,
   and it handles the complexities of task dependencies and worker availability.
-  ```elixir
-  {:ok, job_pid} = Job.start_link(%{id: "job_1", tasks: %{"task_1" => %{"exec" => "some_exec", "timeout" => 5000}}})
-  Job.worker_ready(job_pid, self())
-  Job.task_completed(job_pid, {"task_1", {:result, "task_result"}, self()})
-  ```
   """
   use GenServer
   require Logger
@@ -46,8 +41,6 @@ defmodule Job do
   #### Parameters:
   - `state`: The initial state of the job, which includes the job ID and tasks to be executed.   Returns::
   - `{:ok, pid}`: Returns the PID of the started job process wrapped in an `:ok` tuple.
-    mple:
-  :
   ```elixir
   {:ok, job_pid} = Job.start_link(%{id: "job_1", tasks: %{"task_1" => %{"exec" => "some_exec", "timeout" => 5000}
   }})
@@ -81,11 +74,6 @@ defmodule Job do
   - `state`: The current state of the job, which includes ongoing tasks, free workers, and results.
   #### Returns:
   - `{:noreply, new_state}`: Returns the updated state of the job wrapped in a `:noreply` tuple.
-  #### Example:
-  ```elixir
-  GenServer.cast(job_pid, {:worker_ready, worker_pid})
-  GenServer.cast(job_pid, {:task_terminated, {task_name, {:result, value}, worker_pid}})
-  ```
   """
   def handle_cast({:worker_ready, worker_pid}, state) do
     Logger.debug("[Job #{inspect(self())}]: New worker #{inspect(worker_pid)}...")
@@ -151,7 +139,10 @@ defmodule Job do
         pid -> [pid]
       end
 
-    Logger.debug("[Job #{inspect(self())}]: Remaining tasks to do #{inspect(new_ongoing_tasks)}...")
+    Logger.debug(
+      "[Job #{inspect(self())}]: Remaining tasks to do #{inspect(new_ongoing_tasks)}..."
+    )
+
     Logger.debug("[Job #{inspect(self())}]: Tasks to disable #{inspect(disable_tasks)}...")
 
     Logger.debug("[Job #{inspect(self())}]: Results => #{inspect(state[:results])}")
@@ -222,10 +213,6 @@ defmodule Job do
   - `state`: The current state of the job, which includes ongoing tasks, free workers, and results.
   #### Returns:
   - `{:noreply, state}`: Returns the current state of the job wrapped in a `:noreply` tuple.
-  #### Example:
-  ```elixir
-  GenServer.handle_info({:notify_ready, worker_pid}, state)
-  ```
   """
   def handle_info({:notify_ready, worker_pid}, state) do
     Logger.debug("[Job #{inspect(self())}]: Adding new worker #{inspect(worker_pid)}...")

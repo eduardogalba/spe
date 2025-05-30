@@ -7,11 +7,21 @@ defmodule Planner do
   ## Example:
   ```elixir
   job_desc = %{
+    "name" => "nisse",
     "tasks" => [
-      %{"name" => "task1", "enables" => ["task2"]},
-      %{"name" => "task2", "enables" => []}
-    ],
-    "priority" => ["task1"]
+      %{
+        "name" => "t0",
+        "enables" => [],
+        "exec" => fn _ -> 1 + 2 end,
+        "timeout" => :infinity
+      },
+      %{
+        "name" => "t1",
+        "enables" => ["t0"],
+        "exec" => fn _ -> 3 + 4 end,
+        "timeout" => :infinity
+      }
+    ]
   }
   {:ok, plan} = Planner.planning(job_desc, 2)
   ```
@@ -34,11 +44,21 @@ defmodule Planner do
   #### Example:
   ```elixir
   job_desc = %{
+    "name" => "nisse",
     "tasks" => [
-      %{"name" => "task1", "enables" => ["task2"]},
-      %{"name" => "task2", "enables" => []}
-    ],
-    "priority" => ["task1"]
+      %{
+        "name" => "t0",
+        "enables" => [],
+        "exec" => fn _ -> 1 + 2 end,
+        "timeout" => :infinity
+      },
+      %{
+        "name" => "t1",
+        "enables" => ["t0"],
+        "exec" => fn _ -> 3 + 4 end,
+        "timeout" => :infinity
+      }
+    ]
   }
   {:ok, plan} = Planner.planning(job_desc, 2)
   ```

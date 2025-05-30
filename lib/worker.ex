@@ -92,10 +92,6 @@ defmodule Worker do
   - `{:task, {job_id, {name, timeout, fun, params}}}`: A tuple containing the job ID, task name, timeout, function to execute, and parameters.
   #### Returns:
   - `{:noreply, state}`: Indicates that the Worker has completed the task and is ready for the next one.
-  #### Example:
-  ```elixir
-  GenServer.cast(worker_pid, {:task, {job_id, {task_name, timeout, function, params}}})
-  ```
   """
   def handle_cast({:task, {job_id, {name, timeout, fun, params}}}, state) do
     result = apply(job_id, name, timeout, fun, params)
@@ -110,10 +106,6 @@ defmodule Worker do
   - `:are_u_ready`: A message indicating that the caller wants to check if the Worker is ready.
   #### Returns:
   - `{:reply, :ok, state}`: Indicates that the Worker is ready and returns the current state.
-  #### Example:
-  ```elixir
-  GenServer.call(worker_pid, :are_u_ready)
-  ```
   """
   def handle_call(:are_u_ready, _from, state) do
     {:reply, :ok, state}

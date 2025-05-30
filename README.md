@@ -74,12 +74,6 @@ The SPE system uses Elixir's `Logger` for all major events. Adjust log level as 
 Logger.configure(level: :debug)
 ```
 
-## Contributing
-
-- Follow best practices for Git commits (small, descriptive).
-- Ensure tests (to be implemented) pass before submitting PRs.
-- See `AUTHORS` for contributor listing.
-
 ## License
 
 [Specify your license here]

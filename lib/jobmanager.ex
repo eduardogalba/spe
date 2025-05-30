@@ -11,9 +11,14 @@ defmodule JobManager do
   - Submit a job
   ```elixir
   job_desc = %{
+    "name" => "nisse",
     "tasks" => [
-      %{"name" => "task1", "enables" => ["task2"]},
-      %{"name" => "task2", "enables" => []}
+      %{
+        "name" => "t0",
+        "enables" => [],
+        "exec" => fn _ -> 1 + 2 end,
+        "timeout" => :infinity
+      }
     ]
   }
   {:ok, job_id} = JobManager.submit_job(job_desc)
@@ -62,16 +67,6 @@ defmodule JobManager do
   #### Returns:
   - `{:reply, {:ok, job_id}, new_state}`: If the job is successfully planned and stored, it returns the job ID and the updated state.
   - `{:reply, {:error, error}, state}`: If there is an error in planning the job, it returns the error and the current state.
-  #### Example:
-  ```elixir
-  job_desc = %{
-    "tasks" => [
-      %{"name" => "task1", "enables" => ["task2"]},
-      %{"name" => "task2", "enables" => []}
-    ]
-  }
-  {:ok, job_id} = JobManager.submit_job(job_desc)
-  ```
   """
   def handle_call({:submit, job_desc}, _from, state) do
     job_id = "#{inspect(make_ref())}"
@@ -163,12 +158,6 @@ defmodule JobManager do
   - `{:planning, {job_id, job_plan}}`: A tuple containing the job ID and its planned tasks.
   #### Returns:
   - `{:noreply, new_state}`: The updated state after planning the job.
-  #### Example:
-  ```elixir
-  job_id = "12345"
-  job_plan = [%{"task" => "task1"}, %{"task" => "task2"}]
-  JobManager.plan_ready(job_id, job_plan)
-  ```
   """
   def handle_info(msg, state) do
     Logger.debug("Generic info")
@@ -205,9 +194,14 @@ defmodule JobManager do
   #### Example:
   ```elixir
   job_desc = %{
+    "name" => "nisse",
     "tasks" => [
-      %{"name" => "task1", "enables" => ["task2"]},
-      %{"name" => "task2", "enables" => []}
+      %{
+        "name" => "t0",
+        "enables" => [],
+        "exec" => fn _ -> 1 + 2 end,
+        "timeout" => :infinity
+      }
     ]
   }
   {:ok, job_id} = JobManager.submit_job(job_desc)
@@ -240,12 +234,6 @@ defmodule JobManager do
   - `job_plan`: The planned tasks for the job.
   #### Returns:
   - `:ok`: If the plan is successfully received and processed.
-  #### Example:
-  ```elixir
-  job_id = "12345"
-  job_plan = [%{"task" => "task1"}, %{"task" => "task2"}]
-  JobManager.plan_ready(job_id, job_plan)
-  ```
   """
   def plan_ready(job_id, job_plan) do
     GenServer.cast(SPE.JobManager, {:planning, {job_id, job_plan}})
