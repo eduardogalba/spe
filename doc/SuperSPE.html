@@ -12,7 +12,7 @@
 
     <link rel="stylesheet" href="dist/html-elixir-KV3YOVJ3.css" />
 
-    <script defer src="dist/sidebar_items-F7FA316C.js"></script>
+    <script defer src="dist/sidebar_items-058DAB4E.js"></script>
     <script defer src="docs_config.js"></script>
     <script defer src="dist/html-DPJLHKSM.js"></script>
 
@@ -83,6 +83,11 @@ spe
   </div>
 
 
+    <section id="moduledoc">
+<p>SuperSPE is the main supervisor for the SuperSPE application.
+It manages the SuperManager and JobManager processes.</p>
+    </section>
+
 </div>
 
   <section id="summary" class="details-list">
@@ -109,9 +114,29 @@ spe
 
     <div class="summary-row">
       <div class="summary-signature">
+        <a href="#init/1" data-no-tooltip="" translate="no">init(children)</a>
+
+      </div>
+
+        <div class="summary-synopsis"><p>Starts the SuperSPE supervisor with its children processes.
+The children include the Phoenix PubSub, SuperManager, and JobManager.
+The supervisor uses a one-for-one strategy with a maximum of one restart
+within five seconds.
+The JobManager is started with a name specified in the options.
+The SuperManager is started without any options.
+The PubSub is started with a name defined in the SPE module.
+The supervisor is named SPE.SuperSPE.</p></div>
+
+    </div>
+
+    <div class="summary-row">
+      <div class="summary-signature">
         <a href="#start_link/1" data-no-tooltip="" translate="no">start_link(opts)</a>
 
       </div>
+
+        <div class="summary-synopsis"><p>Starts the SuperSPE supervisor with the given options.
+This function initializes the Supervisor and sets it up to manage the SuperManager and JobManager processes.</p></div>
 
     </div>
 
@@ -146,6 +171,31 @@ spe
 <p>Returns a specification to start this module under a supervisor.</p><p>See <a href="https://hexdocs.pm/elixir/Supervisor.html"><code class="inline">Supervisor</code></a>.</p>
   </section>
 </section>
+<section class="detail" id="init/1">
+
+  <div class="detail-header">
+    <a href="#init/1" class="detail-link" data-no-tooltip="" aria-label="Link to this function">
+      <i class="ri-link-m" aria-hidden="true"></i>
+    </a>
+    <div class="heading-with-actions">
+      <h1 class="signature" translate="no">init(children)</h1>
+
+
+    </div>
+  </div>
+
+  <section class="docstring">
+
+<p>Starts the SuperSPE supervisor with its children processes.
+The children include the Phoenix PubSub, SuperManager, and JobManager.
+The supervisor uses a one-for-one strategy with a maximum of one restart
+within five seconds.
+The JobManager is started with a name specified in the options.
+The SuperManager is started without any options.
+The PubSub is started with a name defined in the SPE module.
+The supervisor is named SPE.SuperSPE.</p><h4>Returns:</h4><ul><li><code class="inline">{:ok, pid}</code>: The Supervisor's PID is returned, indicating that it has been successfully started.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="5926201393-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">sup_pid</span><span class="p" data-group-id="5926201393-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">SuperSPE</span><span class="o">.</span><span class="n">start_link</span><span class="p" data-group-id="5926201393-2">(</span><span class="p" data-group-id="5926201393-3">[</span><span class="p" data-group-id="5926201393-3">]</span><span class="p" data-group-id="5926201393-2">)</span></code></pre>
+  </section>
+</section>
 <section class="detail" id="start_link/1">
 
   <div class="detail-header">
@@ -161,7 +211,8 @@ spe
 
   <section class="docstring">
 
-
+<p>Starts the SuperSPE supervisor with the given options.
+This function initializes the Supervisor and sets it up to manage the SuperManager and JobManager processes.</p><h4>Parameters:</h4><ul><li><code class="inline">opts</code>: Options for the JobManager, including the name to be used.</li></ul><h4>Returns:</h4><ul><li><code class="inline">{:ok, pid}</code>: The Supervisor's PID is returned, indicating that it has been successfully started.</li></ul><h4>Example:</h4><pre><code class="makeup elixir" translate="no"><span class="p" data-group-id="2111890596-1">{</span><span class="ss">:ok</span><span class="p">,</span><span class="w"> </span><span class="n">sup_pid</span><span class="p" data-group-id="2111890596-1">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">SuperSPE</span><span class="o">.</span><span class="n">start_link</span><span class="p" data-group-id="2111890596-2">(</span><span class="ss">name</span><span class="p">:</span><span class="w"> </span><span class="nc">SPE.JobManager</span><span class="p" data-group-id="2111890596-2">)</span></code></pre>
   </section>
 </section>
 
