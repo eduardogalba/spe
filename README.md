@@ -73,7 +73,3 @@ The SPE system uses Elixir's `Logger` for all major events. Adjust log level as 
 ```elixir
 Logger.configure(level: :debug)
 ```
-
-## License
-
-[Specify your license here]
