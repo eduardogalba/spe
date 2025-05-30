@@ -55,18 +55,70 @@ SPE.submit_job(job)
 
 ### Persistence Details
 
-- **How it works**: The branch introduces mechanisms (e.g., using ETS, DETS, or file serialization) to write job/task state to disk.
+- **How it works**: This branch uses Ecto to connect to PostgreSQL and save/restore job states in the database.
+- **Connection details**: The connection configuration is found in [`config/config.exs`](config/config.exs), where you can set the username, password, database, and host.
+  ```elixir
+  config :spe, SPE.Repo,
+    username: "postgres",
+    password: "postgres",
+    database: "spe",
+    hostname: "localhost",
+    pool_size: 10
+  ```
+- **Migrations**: Database migrations are located in [`priv/repo/migrations`](priv/repo/migrations). The `jobs` table schema defines how job states are stored.
+- **Ecto commands**:
+  - Initialize the database:
+    ```sh
+    mix ecto.create
+    ```
+  - Apply migrations:
+    ```sh
+    mix ecto.migrate
+    ```
+- **Docker Compose**: Optionally, you can use the provided `docker-compose.yml` file to quickly start a ready-to-use PostgreSQL service.
+  ```yaml
+  version: "3"
+  services:
+    db:
+      image: postgres:16
+      environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: spe
+      ports:
+        - "5432:5432"
+      volumes:
+        - pgdata:/var/lib/postgresql/data
+  volumes:
+    pgdata:
+  ```
+- **Jobs DML**: The `jobs` table stores each job's state, including name, plan, tasks, results, and timestamps.
+  ```sql
+  CREATE TABLE jobs (
+    name VARCHAR PRIMARY KEY,
+    plan JSONB,
+    num_workers INTEGER,
+    enables JSONB,
+    returns JSONB,
+    results JSONB,
+    tasks JSONB,
+    inserted_at TIMESTAMP
+  );
+  ```
 - **On restart**: The server loads persisted job/task states and resumes processing where it left off.
 
 ## Testing
 
+To ensure the persistence features work correctly:
+
+- **Unit tests**: Covering Ecto integration and job state management.
+- **Integration tests**: End-to-end scenarios from job submission to recovery.
+- **Manual tests**: Verify behavior during unexpected shutdowns and restarts.
+
+Run tests with:
 ```sh
 mix test
 ```
-Tests cover:
-- State persistence and recovery
-- All normal job execution scenarios
-- Failure and crash-resilience
 
 ## Documentation
 
@@ -80,18 +132,10 @@ Tests cover:
 - **Distributed Recovery**: Extend persistence across a distributed cluster.
 - **More Robust Error Handling**: Detect and resolve conflicting or orphaned job states.
 
-See [`docs/backlog.md`](docs/backlog.md) for further planning and user stories.
-
 ## Logging
 
 All events, including persistence and recovery actions, are logged using Elixir's Logger.
-
-## Contributing
-
-- Make small, descriptive commits.
-- Ensure all persistence and recovery features are fully tested.
-- Add your name to the `AUTHORS` file.
-
-## License
-
-[Specify your license here]
+Logging configuration details are also found in [`config/config.exs`](config/config.exs)
+```elixir
+  config :logger, level: :info
+  ```
