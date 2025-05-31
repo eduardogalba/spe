@@ -229,7 +229,7 @@ defmodule Job do
       task_name = Map.get(state[:busy_workers], pid)
       Logger.debug("[Job #{inspect(self())}]: Previous task being done #{inspect(task_name)}")
 
-      task_completed(self(), {task_name, {:failed, reason}, {:fallen_worker, pid}})
+      task_completed(self(), {task_name, {:failed, {:crashed, reason}}, {:fallen_worker, pid}})
       new_free_workers = List.delete(state[:free_workers], pid)
 
       new_state =
