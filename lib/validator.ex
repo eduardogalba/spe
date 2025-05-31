@@ -56,6 +56,8 @@ defmodule Validator do
          true <- is_bitstring(job["name"]) and String.length(job["name"]) > 0,
          _ <- Logger.debug("[Validator #{inspect(self())}]: Is the tasks field a list?"),
          true <- is_list(job["tasks"]) and !Enum.empty?(job["tasks"]),
+         _ <- Logger.debug("[Validator #{inspect(self())}]: Has it priority field? Is it a list?"),
+         true <- !Map.has_key?(job, "priority") or (Map.has_key?(job, "priority") and is_list(job["priority"])),
          _ <- Logger.debug("[Validator #{inspect(self())}]: Validating tasks..."),
          nil <- Enum.find(job["tasks"], &(!valid_task(&1))),
          _ <- Logger.debug("[Validator #{inspect(self())}]: Are the tasks names unique?"),
