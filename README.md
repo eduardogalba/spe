@@ -117,7 +117,7 @@ To ensure the persistence features work correctly:
 
 Run tests with:
 ```sh
-mix test
+mix test test/spe_test.exs
 ```
 
 ## Documentation
