@@ -52,24 +52,78 @@ Or programmatically:
 
 ### Submitting a Job
 
-A job is a map like:
+In order to submit a job, you may need to provide a job description as a map:
 ```elixir
-job = %{"name" => "nisse", "tasks" => [%{"name" => "t0", "enables" => [], "exec" => fn _ -> 1 + 2 end, "timeout" => :infinity}]}
+job = %{
+  "name" => "nisse", 
+  "tasks" => 
+  [
+    %{
+      "name" => "t0", 
+      "enables" => [], 
+      "exec" => fn _ -> 1 + 2 end, 
+      "timeout" => :infinity
+      }
+  ]}
+
+  
 
 id = case SPE.submit_job(job) do
   {:ok, job_id} -> job_id
   {:error, desc} -> desc
 end
 ```
+Also, you can specify high-priority tasks:
+```elixir
+job = %{
+  "name" => "nisse", 
+  "tasks" => 
+  [
+    %{
+      "name" => "t0", 
+      "enables" => [], 
+      "exec" => fn _ -> IO.puts("Max") end, 
+      "timeout" => :infinity
+      },
+    %{
+      "name" => "t1", 
+      "enables" => [], 
+      "exec" => fn _ -> IO.puts("Hello, ") end, 
+      "timeout" => :infinity
+      }
+  ],
+  "priority" => ["t1"]
+  }
 
+  
+
+id = case SPE.submit_job(job) do
+  {:ok, job_id} -> job_id
+  {:error, desc} -> desc
+end
+```
 ### Starting a Job
 ```elixir
 SPE.start_job(job_id)
 ```
 
+## Testing
+
+To run the main tests for the project, use:
+
+```sh
+mix test test/spe_test.exs
+```
+
+This will execute the core test suite for the SPE system.
+
 ## Logging
 
-The SPE system uses Elixir's `Logger` for all major events. Adjust log level as needed for debugging:
+The SPE system uses Elixir's `Logger` for all major events. Adjust log level as needed in [config/config.exs](config/config.exs):
 ```elixir
-Logger.configure(level: :debug)
+config :logger, level: :info
 ```
+
+## License
+
+[MIT License](LICENSE)
